@@ -3,6 +3,7 @@ import matplotlib.pyplot as plt
 import numpy as np
 
 COLORMAP = 'jet'
+plt.style.use('dark_background')
 
 
 def plot_airfoil(landmarks: np.ndarray, grid_x: np.array, grid_y: np.array, momentum_x: np.array, momentum_y: np.array):
@@ -12,7 +13,7 @@ def plot_airfoil(landmarks: np.ndarray, grid_x: np.array, grid_y: np.array, mome
 
     fig, ax = plt.subplots(1)
     ax.set_title("Flow momentum")
-    ax.fill(landmarks[:, 0], landmarks[:, 1], color='black')
+    ax.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
     ax.quiver(grid_x, grid_y, momentum_x, momentum_y, color,
               scale_units='xy',
               units='xy',
