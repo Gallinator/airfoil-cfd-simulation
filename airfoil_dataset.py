@@ -1,4 +1,5 @@
 import h5py
+import torch
 from torch.utils.data import Dataset
 
 
@@ -8,6 +9,7 @@ class AirfoilDataset(Dataset):
         self.landmarks = self.file['landmarks']
         self.momentum_x = self.file['rho_u']
         self.momentum_y = self.file['rho_v']
+        self.grid_x, self.grid_y = self.file['grid'][()][0], self.file['grid'][()][1]
 
         self.length = int(len(self.landmarks) * size)
 
@@ -18,15 +20,14 @@ class AirfoilDataset(Dataset):
             raise IndexError(f'Index {item} is out of range for size {self.length}')
 
         landmark = self.landmarks[self.start + item]
-        grid_x, grid_y = self.file['grid'][()][0], self.file['grid'][()][1]
         momentum_x = self.momentum_x[self.start + item]
         momentum_y = self.momentum_y[self.start + item]
 
-        return (landmark,
-                grid_x,
-                grid_y,
-                momentum_x,
-                momentum_y)
+        return (torch.tensor(landmark, dtype=torch.float32),
+                torch.tensor(self.grid_x, dtype=torch.float32),
+                torch.tensor(self.grid_y, dtype=torch.float32),
+                torch.tensor(momentum_x, dtype=torch.float32),
+                torch.tensor(momentum_y, dtype=torch.float32))
 
     def __len__(self):
         return self.length
