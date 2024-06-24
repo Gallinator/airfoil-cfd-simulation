@@ -1,11 +1,16 @@
 import multiprocessing
 import os.path
 
+import h5pickle
 import h5py
 import numpy as np
 import requests
 import tqdm
+from h5py import File
 from scipy.interpolate import griddata
+
+from airfoil_dataset import AirfoilDataset
+from visualization import plot_airfoil
 
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
 
@@ -27,40 +32,55 @@ def download_data(dest_dir: str):
                     file.write(chunk)
 
 
-def airfoil_sampling_task(i, sample_grid, rho_u, rho_v, r_grid):
-    print(f'Sampling {i}')
-    rho_u = sample_gridded_values(sample_grid, rho_u, r_grid)
-    rho_v = sample_gridded_values(sample_grid, rho_v, r_grid)
-    return i, rho_u, rho_v
+def airfoil_sampling_task(i, sample_grid, ff):
+    i = int(i)
+    print(f'Sampling airfoil {i}')
+    x = ff['x'][()]
+    y = ff['y'][()]
+    r_u = sample_gridded_values(sample_grid, ff['rho_u'][()], (x, y))
+    r_v = sample_gridded_values(sample_grid, ff['rho_v'][()], (x, y))
+    r = sample_gridded_values(sample_grid, ff['rho'][()], (x, y))
+    e = sample_gridded_values(sample_grid, ff['e'][()], (x, y))
+    o = sample_gridded_values(sample_grid, ff['omega'][()], (x, y))
+    return i, r_u, r_v, r, e, o
 
 
-def create_sampled_datasets(source_path: str, dest_path: str):
+def get_flow_fields(src: File, num_samples: int):
+    ff = []
+    i = 0
+    for item in src['alpha+12']['flow_field'].items():
+        if i >= num_samples:
+            break
+        ff.append(item)
+        i += 1
+    return ff
+
+
+def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int):
     os.remove(dest_path)
-    with h5py.File(source_path, 'r') as source:
+    with (h5pickle.File(source_path, 'r') as source):
         with h5py.File(dest_path, 'w') as dest:
-            landmarks = source['shape']['landmarks'][()]
-            num_airfoils = len(landmarks)
+            landmarks = source['shape']['landmarks'][()][:num_samples - 1]
             dest['landmarks'] = landmarks
-            grid_x, grid_y = np.mgrid[-0.5:1.5:100j, -1:1:100j]
+            grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
             dest['grid'] = np.array([grid_x, grid_y])
 
-            raw_grid = []
-            raw_rho_u = []
-            raw_rho_v = []
-            for i, ff in tqdm.tqdm(source['alpha+04']['flow_field'].items(), desc='Reading flow fields into memory'):
-                raw_grid.append((ff['x'][()], ff['y'][()]))
-                raw_rho_u.append(ff['rho_u'][()])
-                raw_rho_v.append(ff['rho_v'][()])
-
-            momentum_x, momentum_y = [None] * num_airfoils, [None] * num_airfoils
+            rho_u, rho_v, rho, energy, omega = ([None] * num_samples, [None] * num_samples, [None] * num_samples,
+                                                [None] * num_samples, [None] * num_samples)
             with multiprocessing.Pool() as pool:
-                args = [(i, (grid_x, grid_y), raw_rho_u[i], raw_rho_v[i], raw_grid[i]) for i in range(num_airfoils)]
-                for i, m_x, m_y in pool.starmap(airfoil_sampling_task, args):
-                    momentum_x[i] = m_x
-                    momentum_y[i] = m_y
+                args = [(ff[0], (grid_x, grid_y), ff[1]) for ff in get_flow_fields(source, num_samples)]
+                for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
+                    rho_u[i] = r_u
+                    rho_v[i] = r_v
+                    rho[i] = r
+                    energy[i] = e
+                    omega[i] = o
 
-                dest['rho_u'] = np.array(momentum_x)
-                dest['rho_v'] = np.array(momentum_y)
+                dest['rho_u'] = np.array(rho_u)
+                dest['rho_v'] = np.array(rho_v)
+                dest['rho'] = np.array(r)
+                dest['energy'] = np.array(energy)
+                dest['omega'] = np.array(omega)
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
@@ -71,3 +91,6 @@ def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
                               (sample_grid_x, sample_grid_y),
                               method='linear')
     return sampled_values
+
+
+create_sampled_datasets('/media/luigi/Linux/airfoil_9k_data.h5', 'data/airfoils.h5', 50j, 1000)
