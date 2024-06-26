@@ -79,7 +79,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['grid'] = np.array([grid_x, grid_y])
         dest['rho_u'] = np.array(rho_u)
         dest['rho_v'] = np.array(rho_v)
-        dest['rho'] = np.array(r)
+        dest['rho'] = np.array(rho)
         dest['energy'] = np.array(energy)
         dest['omega'] = np.array(omega)
 
