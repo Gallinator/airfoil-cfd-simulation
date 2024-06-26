@@ -24,8 +24,6 @@ class AirfoilDataset(Dataset):
         momentum_y = self.momentum_y[self.start + item]
 
         return (torch.tensor(landmark, dtype=torch.float32),
-                torch.tensor(self.grid_x, dtype=torch.float32),
-                torch.tensor(self.grid_y, dtype=torch.float32),
                 torch.tensor(momentum_x, dtype=torch.float32),
                 torch.tensor(momentum_y, dtype=torch.float32))
 
