@@ -13,8 +13,6 @@ class Model(nn.Module):
         self.seq = nn.Sequential(
             nn.Linear(in_size + out_size * 2, 2048),
             nn.Tanh(),
-            nn.Linear(2048, 2048),
-            nn.Tanh(),
             nn.Linear(2048, 4096),
             nn.Tanh(),
             nn.Linear(4096, 8192),
