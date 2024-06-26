@@ -59,28 +59,29 @@ def get_flow_fields(src: File, num_samples: int):
 def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int):
     os.remove(dest_path)
     with (h5pickle.File(source_path, 'r') as source):
-        with h5py.File(dest_path, 'w') as dest:
-            landmarks = source['shape']['landmarks'][()][:num_samples - 1]
-            dest['landmarks'] = landmarks
-            grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
-            dest['grid'] = np.array([grid_x, grid_y])
+        landmarks = source['shape']['landmarks'][()][:num_samples - 1]
 
-            rho_u, rho_v, rho, energy, omega = ([None] * num_samples, [None] * num_samples, [None] * num_samples,
-                                                [None] * num_samples, [None] * num_samples)
-            with multiprocessing.Pool() as pool:
-                args = [(ff[0], (grid_x, grid_y), ff[1]) for ff in get_flow_fields(source, num_samples)]
-                for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
-                    rho_u[i] = r_u
-                    rho_v[i] = r_v
-                    rho[i] = r
-                    energy[i] = e
-                    omega[i] = o
+        grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
-                dest['rho_u'] = np.array(rho_u)
-                dest['rho_v'] = np.array(rho_v)
-                dest['rho'] = np.array(r)
-                dest['energy'] = np.array(energy)
-                dest['omega'] = np.array(omega)
+        rho_u, rho_v, rho, energy, omega = ([None] * num_samples, [None] * num_samples, [None] * num_samples,
+                                            [None] * num_samples, [None] * num_samples)
+        with multiprocessing.Pool() as pool:
+            args = [(ff[0], (grid_x, grid_y), ff[1]) for ff in get_flow_fields(source, num_samples)]
+            for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
+                rho_u[i] = r_u
+                rho_v[i] = r_v
+                rho[i] = r
+                energy[i] = e
+                omega[i] = o
+
+    with h5py.File(dest_path, 'w') as dest:
+        dest['landmarks'] = landmarks
+        dest['grid'] = np.array([grid_x, grid_y])
+        dest['rho_u'] = np.array(rho_u)
+        dest['rho_v'] = np.array(rho_v)
+        dest['rho'] = np.array(r)
+        dest['energy'] = np.array(energy)
+        dest['omega'] = np.array(omega)
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
