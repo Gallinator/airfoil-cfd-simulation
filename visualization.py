@@ -1,9 +1,27 @@
 import matplotlib
 import matplotlib.pyplot as plt
 import numpy as np
+from matplotlib.ticker import MaxNLocator
 
 COLORMAP = 'jet'
 plt.style.use('dark_background')
+
+
+def plot_training_history(losses, lr):
+    x = np.arange(len(losses))
+    fig, axs = plt.subplots(2)
+
+    axs[0].set_title('Training loss')
+    axs[0].set_xlabel('Epoch')
+    axs[0].plot(x, losses)
+    axs[0].xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    axs[1].set_title('Training learning rate')
+    axs[1].set_xlabel('Epoch')
+    axs[1].plot(x, lr)
+    axs[1].xaxis.set_major_locator(MaxNLocator(integer=True))
+
+    plt.tight_layout()
 
 
 def plot_airfoil(landmarks: np.ndarray, grid_x: np.array, grid_y: np.array, momentum_x: np.array, momentum_y: np.array):
