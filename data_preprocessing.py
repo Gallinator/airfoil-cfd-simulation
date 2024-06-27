@@ -1,8 +1,10 @@
 import multiprocessing
 import os.path
+import sys
 
 import h5pickle
 import h5py
+import matplotlib.path
 import numpy as np
 import requests
 import tqdm
@@ -15,6 +17,7 @@ from visualization import plot_airfoil
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
 TRAIN_FILE = 'train_airfoils.h5'
 TEST_FILE = 'test_airfoils.h5'
+AIRFOIL_MASK_VALUE = sys.float_info.min
 
 
 def download_data(dest_dir: str):
@@ -34,16 +37,36 @@ def download_data(dest_dir: str):
                     file.write(chunk)
 
 
-def airfoil_sampling_task(i, sample_grid, ff):
+def get_mask(airfoil_poly: np.ndarray, grid: tuple):
+    airfoil_path = matplotlib.path.Path(airfoil_poly)
+    grid_x, grid_y = grid
+    grid_x, grid_y = grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)
+    grid_points = np.concatenate((grid_x, grid_y), axis=1)
+    return airfoil_path.contains_points(grid_points)
+
+
+def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
     i = int(i)
     print(f'Sampling airfoil {i}')
     x = ff['x'][()]
     y = ff['y'][()]
+    airfoil_mask = get_mask(airfoil_poly, sample_grid).reshape(sample_grid[0].shape)
+
     r_u = sample_gridded_values(sample_grid, ff['rho_u'][()], (x, y))
+    r_u[airfoil_mask] = AIRFOIL_MASK_VALUE
+
     r_v = sample_gridded_values(sample_grid, ff['rho_v'][()], (x, y))
+    r_v[airfoil_mask] = AIRFOIL_MASK_VALUE
+
     r = sample_gridded_values(sample_grid, ff['rho'][()], (x, y))
+    r[airfoil_mask] = AIRFOIL_MASK_VALUE
+
     e = sample_gridded_values(sample_grid, ff['e'][()], (x, y))
+    e[airfoil_mask] = AIRFOIL_MASK_VALUE
+
     o = sample_gridded_values(sample_grid, ff['omega'][()], (x, y))
+    o[airfoil_mask] = AIRFOIL_MASK_VALUE
+
     return i, r_u, r_v, r, e, o
 
 
@@ -77,7 +100,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
         rho_u, rho_v, rho, energy, omega = [[None] * num_samples for _ in range(5)]
         with multiprocessing.Pool() as pool:
-            args = [(i, (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
+            args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
                 rho_u[i] = r_u
                 rho_v[i] = r_v
