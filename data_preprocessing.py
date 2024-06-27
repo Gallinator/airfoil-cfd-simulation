@@ -10,7 +10,6 @@ import requests
 import tqdm
 from h5py import File
 from scipy.interpolate import griddata
-from sklearn.preprocessing import MinMaxScaler
 
 from airfoil_dataset import AirfoilDataset
 from visualization import plot_airfoil
@@ -79,20 +78,6 @@ def get_flow_fields(src: File, indices):
     return ff
 
 
-def normalize_grid(grid_x: np.ndarray, grid_y: np.ndarray) -> tuple:
-    grid_mat = np.concatenate((grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)), axis=1)
-    scaler = MinMaxScaler().fit(grid_mat)
-    norm_grid_mat = scaler.transform(grid_mat)
-    grid_x, grid_y = np.hsplit(norm_grid_mat, 2)
-    return grid_x.flatten(), grid_y.flatten(), scaler
-
-
-def normalize_landmarks(landmarks: np.ndarray, grid_scaler):
-    feature_mat = landmarks.reshape(-1, 2)
-    norm_feature_mat = grid_scaler.transform(feature_mat)
-    return norm_feature_mat.reshape(landmarks.shape)
-
-
 def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int, train_size: float):
     train_path = os.path.join(dest_path, TRAIN_FILE)
     test_path = os.path.join(dest_path, TEST_FILE)
@@ -117,33 +102,29 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         with multiprocessing.Pool() as pool:
             args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
-                rho_u[i] = r_u.flatten()
-                rho_v[i] = r_v.flatten()
-                rho[i] = r.flatten()
-                energy[i] = e.flatten()
-                omega[i] = o.flatten()
-
-    grid_x, grid_y = grid_x.flatten(), grid_y.flatten()
-    norm_grid_x, norm_grid_y, grid_scaler = normalize_grid(grid_x, grid_y)
-    norm_landmarks = normalize_landmarks(landmarks, grid_scaler)
+                rho_u[i] = r_u
+                rho_v[i] = r_v
+                rho[i] = r
+                energy[i] = e
+                omega[i] = o
 
     with h5py.File(train_path, 'w') as dest:
-        dest['landmarks'] = norm_landmarks[:train_end]
-        dest['grid'] = np.array([norm_grid_x, norm_grid_y])
-        dest['rho_u'] = rho_u[:train_end]
-        dest['rho_v'] = rho_v[:train_end]
-        dest['rho'] = rho[:train_end]
-        dest['energy'] = energy[:train_end]
-        dest['omega'] = omega[:train_end]
+        dest['landmarks'] = landmarks[:train_end]
+        dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
+        dest['rho_u'] = np.array(rho_u)[:train_end]
+        dest['rho_v'] = np.array(rho_v)[:train_end]
+        dest['rho'] = np.array(rho)[:train_end]
+        dest['energy'] = np.array(energy)[:train_end]
+        dest['omega'] = np.array(omega)[:train_end]
 
     with h5py.File(test_path, 'w') as dest:
-        dest['landmarks'] = norm_landmarks[train_end:]
-        dest['grid'] = np.array([norm_grid_x, norm_grid_y])
-        dest['rho_u'] = rho_u[train_end:]
-        dest['rho_v'] = rho_v[train_end:]
-        dest['rho'] = rho[train_end:]
-        dest['energy'] = energy[train_end:]
-        dest['omega'] = omega[train_end:]
+        dest['landmarks'] = landmarks[train_end:]
+        dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
+        dest['rho_u'] = np.array(rho_u)[train_end:]
+        dest['rho_v'] = np.array(rho_v)[train_end:]
+        dest['rho'] = np.array(rho)[train_end:]
+        dest['energy'] = np.array(energy)[train_end:]
+        dest['omega'] = np.array(omega)[train_end:]
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
