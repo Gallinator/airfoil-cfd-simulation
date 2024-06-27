@@ -27,7 +27,7 @@ device = get_device()
 
 
 def train_model(save_path: str):
-    train_data = AirfoilDataset('data/airfoils.h5', 'train', 0.6)
+    train_data = AirfoilDataset('data/train_airfoils.h5')
     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=8)
 
     in_size = train_data.landmarks[0].shape[0] * 2
@@ -75,7 +75,7 @@ def train_model(save_path: str):
 
 
 def evaluate_model(model_path: str):
-    test_data = AirfoilDataset('data/airfoils.h5', 'test', 0.4)
+    test_data = AirfoilDataset('data/test_airfoils.h5')
     test_loader = DataLoader(test_data, batch_size=4, shuffle=True, num_workers=8)
 
     in_size = test_data.landmarks[0].shape[0] * 2
