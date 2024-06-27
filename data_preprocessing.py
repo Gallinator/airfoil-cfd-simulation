@@ -13,6 +13,8 @@ from airfoil_dataset import AirfoilDataset
 from visualization import plot_airfoil
 
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
+TRAIN_FILE = 'train_airfoils.h5'
+TEST_FILE = 'test_airfoils.h5'
 
 
 def download_data(dest_dir: str):
@@ -53,9 +55,13 @@ def get_flow_fields(src: File, indices):
     return ff
 
 
-def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int):
-    if os.path.exists(dest_path):
-        os.remove(dest_path)
+def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int, train_size: float):
+    train_path = os.path.join(dest_path, TRAIN_FILE)
+    test_path = os.path.join(dest_path, TEST_FILE)
+    if os.path.exists(train_path):
+        os.remove(train_path)
+    if os.path.exists(test_path):
+        os.remove(test_path)
 
     with (h5pickle.File(source_path, 'r') as source):
         landmarks = source['shape']['landmarks'][()][:num_samples]
@@ -65,6 +71,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         np.random.shuffle(indices)
         indices = indices[:num_samples]
         landmarks = landmarks[indices]
+        train_end = int(num_samples * train_size)
 
         grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
@@ -79,14 +86,23 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
                 energy[i] = e
                 omega[i] = o
 
-    with h5py.File(dest_path, 'w') as dest:
-        dest['landmarks'] = landmarks
+    with h5py.File(train_path, 'w') as dest:
+        dest['landmarks'] = landmarks[:train_end]
         dest['grid'] = np.array([grid_x, grid_y])
-        dest['rho_u'] = np.array(rho_u)
-        dest['rho_v'] = np.array(rho_v)
-        dest['rho'] = np.array(rho)
-        dest['energy'] = np.array(energy)
-        dest['omega'] = np.array(omega)
+        dest['rho_u'] = np.array(rho_u)[:train_end]
+        dest['rho_v'] = np.array(rho_v)[:train_end]
+        dest['rho'] = np.array(rho)[:train_end]
+        dest['energy'] = np.array(energy)[:train_end]
+        dest['omega'] = np.array(omega)[:train_end]
+
+    with h5py.File(test_path, 'w') as dest:
+        dest['landmarks'] = landmarks[train_end:]
+        dest['grid'] = np.array([grid_x, grid_y])
+        dest['rho_u'] = np.array(rho_u)[train_end:]
+        dest['rho_v'] = np.array(rho_v)[train_end:]
+        dest['rho'] = np.array(rho)[train_end:]
+        dest['energy'] = np.array(energy)[train_end:]
+        dest['omega'] = np.array(omega)[train_end:]
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
@@ -95,8 +111,8 @@ def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
     sampled_values = griddata(np.vstack((raw_grid_x, raw_grid_y.T)).T,
                               raw_values,
                               (sample_grid_x, sample_grid_y),
-                              method='linear')
+                              method='nearest')
     return sampled_values
 
 
-create_sampled_datasets('/media/luigi/Linux/airfoil_9k_data.h5', 'data/airfoils.h5', 50j, 1000)
+create_sampled_datasets('/media/luigi/Linux/airfoil_9k_data.h5', 'data', 50j, 1000, 0.8)
