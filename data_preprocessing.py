@@ -17,7 +17,7 @@ from visualization import plot_airfoil
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
 TRAIN_FILE = 'train_airfoils.h5'
 TEST_FILE = 'test_airfoils.h5'
-AIRFOIL_MASK_VALUE = sys.float_info.min
+AIRFOIL_MASK_VALUE = 0
 
 
 def download_data(dest_dir: str):
