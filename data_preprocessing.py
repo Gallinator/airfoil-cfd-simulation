@@ -75,8 +75,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
         grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
-        rho_u, rho_v, rho, energy, omega = ([None] * num_samples, [None] * num_samples, [None] * num_samples,
-                                            [None] * num_samples, [None] * num_samples)
+        rho_u, rho_v, rho, energy, omega = [[None] * num_samples for _ in range(5)]
         with multiprocessing.Pool() as pool:
             args = [(i, (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
