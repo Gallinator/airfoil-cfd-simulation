@@ -12,13 +12,11 @@ class AirfoilDataset(Dataset):
         self.grid_x, self.grid_y = self.file['grid'][()]
 
     def __getitem__(self, item):
-        landmark = self.landmarks[item]
-        momentum_x = self.momentum_x[item]
-        momentum_y = self.momentum_y[item]
+        landmark = torch.tensor(self.landmarks[item], dtype=torch.float32)
+        momentum_x = torch.tensor(self.momentum_x[item], dtype=torch.float32)
+        momentum_y = torch.tensor(self.momentum_y[item], dtype=torch.float32)
 
-        return (torch.tensor(landmark, dtype=torch.float32),
-                torch.tensor(momentum_x, dtype=torch.float32),
-                torch.tensor(momentum_y, dtype=torch.float32))
+        return landmark, momentum_x, momentum_y
 
     def __len__(self):
         return len(self.landmarks)
