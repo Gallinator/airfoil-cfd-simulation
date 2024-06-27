@@ -45,28 +45,33 @@ def airfoil_sampling_task(i, sample_grid, ff):
     return i, r_u, r_v, r, e, o
 
 
-def get_flow_fields(src: File, num_samples: int):
+def get_flow_fields(src: File, indices):
     ff = []
-    i = 0
-    for item in src['alpha+12']['flow_field'].items():
-        if i >= num_samples:
-            break
-        ff.append(item)
-        i += 1
+    for i, item in enumerate(src['alpha+12']['flow_field'].items()):
+        if i in indices:
+            ff.append(item)
     return ff
 
 
 def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int):
-    os.remove(dest_path)
+    if os.path.exists(dest_path):
+        os.remove(dest_path)
+
     with (h5pickle.File(source_path, 'r') as source):
-        landmarks = source['shape']['landmarks'][()][:num_samples - 1]
+        landmarks = source['shape']['landmarks'][()][:num_samples]
+        num_airfoils = len(landmarks)
+
+        indices = np.arange(num_airfoils, dtype=int)
+        np.random.shuffle(indices)
+        indices = indices[:num_samples]
+        landmarks = landmarks[indices]
 
         grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
         rho_u, rho_v, rho, energy, omega = ([None] * num_samples, [None] * num_samples, [None] * num_samples,
                                             [None] * num_samples, [None] * num_samples)
         with multiprocessing.Pool() as pool:
-            args = [(ff[0], (grid_x, grid_y), ff[1]) for ff in get_flow_fields(source, num_samples)]
+            args = [(i, (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
                 rho_u[i] = r_u
                 rho_v[i] = r_v
