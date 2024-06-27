@@ -31,8 +31,8 @@ def train_model(save_path: str):
     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=8)
 
     in_size = train_data.landmarks[0].shape[0] * 2
-    grid_x = torch.tensor(train_data.grid_x, dtype=torch.float32).flatten().to(device)
-    grid_y = torch.tensor(train_data.grid_y, dtype=torch.float32).flatten().to(device)
+    grid_x = torch.tensor(train_data.grid_x, dtype=torch.float32).to(device)
+    grid_y = torch.tensor(train_data.grid_y, dtype=torch.float32).to(device)
     model = Model(grid_x, grid_y, in_size)
     model = model.to(device)
 
@@ -79,8 +79,8 @@ def evaluate_model(model_path: str):
     test_loader = DataLoader(test_data, batch_size=4, shuffle=True, num_workers=8)
 
     in_size = test_data.landmarks[0].shape[0] * 2
-    grid_x = torch.tensor(test_data.grid_x, dtype=torch.float32).flatten().to(device)
-    grid_y = torch.tensor(test_data.grid_y, dtype=torch.float32).flatten().to(device)
+    grid_x = torch.tensor(test_data.grid_x, dtype=torch.float32).to(device)
+    grid_y = torch.tensor(test_data.grid_y, dtype=torch.float32).to(device)
     model = Model(grid_x, grid_y, in_size)
     model.load_state_dict(torch.load(model_path))
     model = model.to(device)

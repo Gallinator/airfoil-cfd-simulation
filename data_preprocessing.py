@@ -88,7 +88,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
     with h5py.File(train_path, 'w') as dest:
         dest['landmarks'] = landmarks[:train_end]
-        dest['grid'] = np.array([grid_x, grid_y])
+        dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
         dest['rho_u'] = np.array(rho_u)[:train_end]
         dest['rho_v'] = np.array(rho_v)[:train_end]
         dest['rho'] = np.array(rho)[:train_end]
@@ -97,7 +97,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
     with h5py.File(test_path, 'w') as dest:
         dest['landmarks'] = landmarks[train_end:]
-        dest['grid'] = np.array([grid_x, grid_y])
+        dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
         dest['rho_u'] = np.array(rho_u)[train_end:]
         dest['rho_v'] = np.array(rho_v)[train_end:]
         dest['rho'] = np.array(rho)[train_end:]
