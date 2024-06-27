@@ -117,11 +117,11 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         with multiprocessing.Pool() as pool:
             args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
-                rho_u[i] = r_u
-                rho_v[i] = r_v
-                rho[i] = r
-                energy[i] = e
-                omega[i] = o
+                rho_u[i] = r_u.flatten()
+                rho_v[i] = r_v.flatten()
+                rho[i] = r.flatten()
+                energy[i] = e.flatten()
+                omega[i] = o.flatten()
 
     grid_x, grid_y = grid_x.flatten(), grid_y.flatten()
     norm_grid_x, norm_grid_y, grid_scaler = normalize_grid(grid_x, grid_y)
@@ -130,20 +130,20 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
     with h5py.File(train_path, 'w') as dest:
         dest['landmarks'] = norm_landmarks[:train_end]
         dest['grid'] = np.array([norm_grid_x, norm_grid_y])
-        dest['rho_u'] = np.array(rho_u)[:train_end]
-        dest['rho_v'] = np.array(rho_v)[:train_end]
-        dest['rho'] = np.array(rho)[:train_end]
-        dest['energy'] = np.array(energy)[:train_end]
-        dest['omega'] = np.array(omega)[:train_end]
+        dest['rho_u'] = rho_u[:train_end]
+        dest['rho_v'] = rho_v[:train_end]
+        dest['rho'] = rho[:train_end]
+        dest['energy'] = energy[:train_end]
+        dest['omega'] = omega[:train_end]
 
     with h5py.File(test_path, 'w') as dest:
         dest['landmarks'] = norm_landmarks[train_end:]
         dest['grid'] = np.array([norm_grid_x, norm_grid_y])
-        dest['rho_u'] = np.array(rho_u)[train_end:]
-        dest['rho_v'] = np.array(rho_v)[train_end:]
-        dest['rho'] = np.array(rho)[train_end:]
-        dest['energy'] = np.array(energy)[train_end:]
-        dest['omega'] = np.array(omega)[train_end:]
+        dest['rho_u'] = rho_u[train_end:]
+        dest['rho_v'] = rho_v[train_end:]
+        dest['rho'] = rho[train_end:]
+        dest['energy'] = energy[train_end:]
+        dest['omega'] = omega[train_end:]
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):

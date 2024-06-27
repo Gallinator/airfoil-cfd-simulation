@@ -50,8 +50,8 @@ def train_model(save_path: str):
         for batch in prog:
             landmarks, momentum_x, momentum_y = batch
             landmarks = landmarks.flatten(start_dim=1).to(device)
-            momentum_x = momentum_x.flatten(start_dim=1).to(device)
-            momentum_y = momentum_y.flatten(start_dim=1).to(device)
+            momentum_x = momentum_x.to(device)
+            momentum_y = momentum_y.to(device)
 
             x, y = model.forward(landmarks)
 
@@ -91,8 +91,8 @@ def evaluate_model(model_path: str):
     for batch in test_loader:
         landmarks, momentum_x, momentum_y = batch
         landmarks = landmarks.flatten(start_dim=1).to(device)
-        momentum_x = momentum_x.flatten(start_dim=1).to(device)
-        momentum_y = momentum_y.flatten(start_dim=1).to(device)
+        momentum_x = momentum_x.to(device)
+        momentum_y = momentum_y.to(device)
 
         x, y = model.forward(landmarks)
 
