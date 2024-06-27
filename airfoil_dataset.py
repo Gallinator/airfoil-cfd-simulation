@@ -9,7 +9,7 @@ class AirfoilDataset(Dataset):
         self.landmarks = self.file['landmarks']
         self.momentum_x = self.file['rho_u']
         self.momentum_y = self.file['rho_v']
-        self.grid_x, self.grid_y = self.file['grid'][()][0], self.file['grid'][()][1]
+        self.grid_x, self.grid_y = self.file['grid'][()]
 
     def __getitem__(self, item):
         landmark = self.landmarks[item]
