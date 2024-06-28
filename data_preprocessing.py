@@ -1,7 +1,5 @@
 import multiprocessing
 import os.path
-import sys
-
 import h5pickle
 import h5py
 import matplotlib.path
@@ -10,9 +8,6 @@ import requests
 import tqdm
 from h5py import File
 from scipy.interpolate import griddata
-
-from airfoil_dataset import AirfoilDataset
-from visualization import plot_airfoil
 
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
 TRAIN_FILE = 'train_airfoils.h5'
@@ -102,29 +97,29 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         with multiprocessing.Pool() as pool:
             args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
-                rho_u[i] = r_u
-                rho_v[i] = r_v
-                rho[i] = r
-                energy[i] = e
-                omega[i] = o
+                rho_u[i] = r_u.flatten()
+                rho_v[i] = r_v.flatten()
+                rho[i] = r.flatten()
+                energy[i] = e.flatten()
+                omega[i] = o.flatten()
 
     with h5py.File(train_path, 'w') as dest:
         dest['landmarks'] = landmarks[:train_end]
         dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
-        dest['rho_u'] = np.array(rho_u)[:train_end]
-        dest['rho_v'] = np.array(rho_v)[:train_end]
-        dest['rho'] = np.array(rho)[:train_end]
-        dest['energy'] = np.array(energy)[:train_end]
-        dest['omega'] = np.array(omega)[:train_end]
+        dest['rho_u'] = rho_u[:train_end]
+        dest['rho_v'] = rho_v[:train_end]
+        dest['rho'] = rho[:train_end]
+        dest['energy'] = energy[:train_end]
+        dest['omega'] = omega[:train_end]
 
     with h5py.File(test_path, 'w') as dest:
         dest['landmarks'] = landmarks[train_end:]
         dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
-        dest['rho_u'] = np.array(rho_u)[train_end:]
-        dest['rho_v'] = np.array(rho_v)[train_end:]
-        dest['rho'] = np.array(rho)[train_end:]
-        dest['energy'] = np.array(energy)[train_end:]
-        dest['omega'] = np.array(omega)[train_end:]
+        dest['rho_u'] = rho_u[train_end:]
+        dest['rho_v'] = rho_v[train_end:]
+        dest['rho'] = rho[train_end:]
+        dest['energy'] = energy[train_end:]
+        dest['omega'] = omega[train_end:]
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
