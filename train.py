@@ -43,7 +43,7 @@ def train_model(save_path: str):
     optimizer = AdamW(model.parameters(), lr=0.000001)
     loss = MSELoss()
 
-    loss_tracker = LossTracker('total')
+    loss_tracker = LossTracker('total', 'u', 'v', 'p', 'cont', 'm_x', 'm_y')
 
     for e in range(epochs):
 
@@ -64,11 +64,33 @@ def train_model(save_path: str):
 
             pred_u, pred_v, pred_p, _, _, _ = model.forward(alpha, grid_x, grid_y, landmarks)
 
-            batch_loss = loss(u, pred_u) + loss(v, pred_v) + loss(p, pred_p)
+            # Copy grids and allow gradient computation
+            diff_grid_x = grid_x.detach()
+            diff_grid_x.requires_grad = True
+            diff_grid_y = grid_y.detach()
+            diff_grid_y.requires_grad = True
+            diff_cont, diff_momentum_x, diff_momentum_y = (
+                model.get_rans_diffs(alpha, diff_grid_x, diff_grid_y, landmarks))
+
+            u_loss = loss(pred_u, u)
+            v_loss = loss(pred_v, v)
+            p_loss = loss(pred_p, p)
+            cont_loss = get_diff_loss(diff_cont, loss)
+            m_x_loss = get_diff_loss(diff_momentum_x, loss)
+            m_y_loss = get_diff_loss(diff_momentum_y, loss)
+
+            batch_loss = u_loss + v_loss + p_loss + 5 * cont_loss + 5 * m_x_loss + 5 * m_y_loss
+
             batch_loss.backward()
             optimizer.step()
 
-            loss_tracker.batch_update(total=batch_loss.item())
+            loss_tracker.batch_update(total=batch_loss.item(),
+                                      u=u_loss.item(),
+                                      v=v_loss.item(),
+                                      p=p_loss.item(),
+                                      cont=cont_loss.item(),
+                                      m_x=m_x_loss.item(),
+                                      m_y=m_y_loss.item())
 
         loss_tracker.epoch_update()
         prog.write(f'Epoch {e} loss: {loss_tracker.loss_history['total'][-1]}')
