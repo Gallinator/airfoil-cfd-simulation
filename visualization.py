@@ -24,25 +24,34 @@ def plot_training_history(loss_tracker: LossTracker):
     plt.tight_layout()
 
 
-def plot_airfoil(landmarks: np.ndarray, grid_x: np.array, grid_y: np.array, momentum_x: np.array, momentum_y: np.array):
-    # Use the momentum magnitude as color
-    color = np.sqrt(np.square(momentum_y) + np.square(momentum_x))
+def plot_airfoil(landmarks: np.ndarray, grid_x: np.array, grid_y: np.array, u: np.array, v: np.array,
+                 p: np.array):
+    color = np.sqrt(np.square(v) + np.square(u))
     vmin, vmax = np.min(color), np.max(color)
 
-    fig, ax = plt.subplots(1)
-    ax.set_title("Flow momentum")
-    ax.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
-    ax.quiver(grid_x, grid_y, momentum_x, momentum_y, color,
-              scale_units='xy',
-              units='xy',
-              scale=6,
-              headwidth=2,
-              headlength=4,
-              headaxislength=4,
-              width=0.002,
-              cmap='jet')
+    fig, axs = plt.subplots(1, 2, figsize=(16, 5))
+    ax_v, ax_p = axs
+    ax_v.set_title(f"Flow velocity")
+    ax_v.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
+    ax_v.quiver(grid_x, grid_y, u, v, color,
+                scale_units='xy',
+                units='xy',
+                scale=6,
+                headwidth=2,
+                headlength=4,
+                headaxislength=4,
+                width=0.002,
+                cmap='jet')
     fig.colorbar(matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin, vmax), cmap=COLORMAP),
                  orientation='vertical',
-                 label='Momentum',
-                 ax=ax)
+                 label='Velocity',
+                 ax=ax_v)
+
+    ax_p.set_title(f"Flow dynamic pressure")
+    ax_p.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
+    ax_p.scatter(grid_x, grid_y, c=p)
+    fig.colorbar(matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(np.min(p), np.max(p)), cmap=COLORMAP),
+                 orientation='vertical',
+                 label='Pressure',
+                 ax=ax_p)
     plt.show()
