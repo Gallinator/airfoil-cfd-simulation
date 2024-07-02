@@ -26,6 +26,11 @@ def get_device():
 device = get_device()
 
 
+def get_diff_loss(out: torch.Tensor, loss):
+    zeros = torch.zeros_like(out, requires_grad=True, dtype=torch.float32)
+    return loss(out, zeros)
+
+
 def train_model(save_path: str):
     train_data = AirfoilDataset('data/train_airfoils.h5')
     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=8)
