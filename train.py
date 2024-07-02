@@ -33,7 +33,7 @@ def get_diff_loss(out: torch.Tensor, loss):
 
 def train_model(save_path: str):
     train_data = AirfoilDataset('data/train_airfoils.h5')
-    train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=8)
+    train_loader = DataLoader(train_data, batch_size=16, shuffle=True, num_workers=8)
 
     in_size = train_data.landmarks[0].shape[0] * 2
     model = Model(len(train_data.grid_x), in_size)
@@ -102,7 +102,7 @@ def train_model(save_path: str):
 
 def evaluate_model(model_path: str):
     test_data = AirfoilDataset('data/test_airfoils.h5')
-    test_loader = DataLoader(test_data, batch_size=4, shuffle=True, num_workers=8)
+    test_loader = DataLoader(test_data, batch_size=16, shuffle=True, num_workers=8)
 
     in_size = test_data.landmarks[0].shape[0] * 2
     model = Model(len(test_data.grid_x), in_size)
