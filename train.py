@@ -46,19 +46,20 @@ def train_model(save_path: str):
         epochs_losses = []
         prog = tqdm.tqdm(train_loader, desc=f'Epoch {e}')
         for batch in prog:
-            landmarks, momentum_x, momentum_y = batch
+            alpha, landmarks, u, v, p = batch
             landmarks = landmarks.flatten(start_dim=1).to(device)
-            momentum_x = momentum_x.to(device)
-            momentum_y = momentum_y.to(device)
+            u = u.to(device)
+            v = v.to(device)
+            p = p.to(device)
 
             batch_size = landmarks.size()[0]
             grid_x = torch.tensor(train_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
             grid_y = torch.tensor(train_data.grid_y, dtype=torch.float32).to(device).repeat(batch_size, 1)
 
-            x, y = model.forward(grid_x, grid_y, landmarks)
+            pred_u, pred_v, pred_p, _, _, _ = model.forward(grid_x, grid_y, landmarks)
 
             optimizer.zero_grad()
-            batch_loss = loss(x, momentum_x) + loss(y, momentum_y)
+            batch_loss = loss(u, pred_u) + loss(v, pred_v) + loss(p, pred_p)
             batch_loss.backward()
             optimizer.step()
 
@@ -89,19 +90,21 @@ def evaluate_model(model_path: str):
     losses = []
 
     for batch in test_loader:
-        landmarks, momentum_x, momentum_y = batch
+        alpha, landmarks, u, v, p = batch
         landmarks = landmarks.flatten(start_dim=1).to(device)
-        momentum_x = momentum_x.to(device)
-        momentum_y = momentum_y.to(device)
+        u = u.to(device)
+        v = v.to(device)
+        p = p.to(device)
 
         batch_size = landmarks.size()[0]
         grid_x = torch.tensor(test_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
         grid_y = torch.tensor(test_data.grid_y, dtype=torch.float32).to(device).repeat(batch_size, 1)
 
-        x, y = model.forward(grid_x, grid_y, landmarks)
+        pred_u, pred_v, pred_p, _, _, _ = model.forward(grid_x, grid_y, landmarks)
 
-        losses.append(loss(x, momentum_x).item())
-        losses.append(loss(y, momentum_y).item())
+        losses.append(loss(u, pred_u).item())
+        losses.append(loss(v, pred_v).item())
+        losses.append(loss(p, pred_p).item())
 
     print(f'Evaluation MSE: {np.mean(losses)}')
 
