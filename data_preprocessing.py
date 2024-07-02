@@ -1,5 +1,7 @@
 import multiprocessing
 import os.path
+import random
+
 import h5pickle
 import h5py
 import matplotlib.path
@@ -65,11 +67,22 @@ def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
     return i, r_u, r_v, r, e, o
 
 
-def get_flow_fields(src: File, indices):
-    ff = []
-    for i, item in enumerate(src['alpha+12']['flow_field'].items()):
-        if i in indices:
-            ff.append(item)
+def get_flow_fields(src: File, indices, alphas) -> list:
+    ff = [None for _ in range(len(indices))]
+    for i, item in enumerate(src[f'alpha+12']['flow_field'].items()):
+        try:
+            idx = indices.index(i)
+        except ValueError:
+            continue
+        if alphas[idx] == '12':
+            ff[idx] = item
+    for i, item in enumerate(src[f'alpha+04']['flow_field'].items()):
+        try:
+            idx = indices.index(i)
+        except ValueError:
+            continue
+        if alphas[idx] == '04':
+            ff[idx] = item
     return ff
 
 
@@ -89,13 +102,15 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         np.random.shuffle(indices)
         indices = indices[:num_samples]
         landmarks = landmarks[indices]
+        alphas = random.choices(['04', '12'], k=num_airfoils)
         train_end = int(num_samples * train_size)
 
         grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
         u, v, p, energy, omega = [[None] * num_samples for _ in range(5)]
         with multiprocessing.Pool() as pool:
-            args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
+            flow_fields = get_flow_fields(source, indices.tolist(), alphas)
+            args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(flow_fields)]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
                 r_raw = r.flatten()
                 u_raw = np.divide(r_u.flatten(), r_raw, np.zeros_like(r_raw), where=r_raw != 0)
@@ -106,7 +121,10 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
                 energy[i] = e.flatten()
                 omega[i] = o.flatten()
 
+        alphas = [int(a) for _, a in enumerate(alphas)]
+
     with h5py.File(train_path, 'w') as dest:
+        dest['alpha'] = alphas[:train_end]
         dest['landmarks'] = landmarks[:train_end]
         dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
         dest['u'] = u[:train_end]
@@ -116,6 +134,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['omega'] = omega[:train_end]
 
     with h5py.File(test_path, 'w') as dest:
+        dest['alpha'] = alphas[train_end:]
         dest['landmarks'] = landmarks[train_end:]
         dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
         dest['u'] = u[train_end:]
