@@ -3,23 +3,23 @@ import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
 
+from loss_tracker import LossTracker
+
 COLORMAP = 'jet'
 plt.style.use('dark_background')
 
 
-def plot_training_history(losses, lr):
-    x = np.arange(len(losses))
-    fig, axs = plt.subplots(2)
+def plot_training_history(loss_tracker: LossTracker):
+    fig, ax = plt.subplots(1)
 
-    axs[0].set_title('Training loss')
-    axs[0].set_xlabel('Epoch')
-    axs[0].plot(x, losses)
-    axs[0].xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.set_title('Training loss')
+    ax.set_xlabel('Epoch')
+    for l, h in loss_tracker.loss_history.items():
+        x = np.arange(len(h))
+        ax.plot(x, h, label=l)
 
-    axs[1].set_title('Training learning rate')
-    axs[1].set_xlabel('Epoch')
-    axs[1].plot(x, lr)
-    axs[1].xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.xaxis.set_major_locator(MaxNLocator(integer=True))
+    ax.legend()
 
     plt.tight_layout()
 
