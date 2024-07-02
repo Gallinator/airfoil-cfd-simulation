@@ -24,12 +24,14 @@ def plot_training_history(loss_tracker: LossTracker):
     plt.tight_layout()
 
 
-def plot_airfoil(landmarks: np.ndarray, grid_x: np.array, grid_y: np.array, u: np.array, v: np.array,
+def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.array, grid_y: np.array, u: np.array, v: np.array,
                  p: np.array):
     color = np.sqrt(np.square(v) + np.square(u))
     vmin, vmax = np.min(color), np.max(color)
 
     fig, axs = plt.subplots(1, 2, figsize=(16, 5))
+    fig.suptitle(f'Airflow simulation, AoA={int(alpha)}', fontsize=16)
+
     ax_v, ax_p = axs
     ax_v.set_title(f"Flow velocity")
     ax_v.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
