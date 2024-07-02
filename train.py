@@ -46,6 +46,8 @@ def train_model(save_path: str):
         epochs_losses = []
         prog = tqdm.tqdm(train_loader, desc=f'Epoch {e}')
         for batch in prog:
+            optimizer.zero_grad()
+
             alpha, landmarks, u, v, p = batch
             landmarks = landmarks.flatten(start_dim=1).to(device)
             u = u.to(device)
@@ -58,7 +60,6 @@ def train_model(save_path: str):
 
             pred_u, pred_v, pred_p, _, _, _ = model.forward(grid_x, grid_y, landmarks)
 
-            optimizer.zero_grad()
             batch_loss = loss(u, pred_u) + loss(v, pred_v) + loss(p, pred_p)
             batch_loss.backward()
             optimizer.step()
