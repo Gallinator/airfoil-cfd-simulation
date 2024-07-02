@@ -68,6 +68,7 @@ def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
 
 
 def get_flow_fields(src: File, indices, alphas) -> list:
+    # As h5py groups do not support slicing the only way to select item is to iterate over the whole group
     ff = [None for _ in range(len(indices))]
     for i, item in enumerate(src[f'alpha+12']['flow_field'].items()):
         try:
