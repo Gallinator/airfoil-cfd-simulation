@@ -7,7 +7,8 @@ class Model(nn.Module):
         super().__init__(*args, **kwargs)
 
         self.seq = nn.Sequential(
-            nn.Linear(in_size + grid_size * 2, 2048),
+            # Landmark + grids + alpha
+            nn.Linear(in_size + grid_size * 2 + 1, 2048),
             nn.Tanh(),
             nn.Linear(2048, 4096),
             nn.Tanh(),
@@ -23,7 +24,7 @@ class Model(nn.Module):
             nn.Linear(8192, grid_size),
             nn.Tanh())
 
-    def forward(self, landmarks, grid_x, grid_y, ) -> tuple:
-        in_data = torch.cat((landmarks, grid_x, grid_y), 1)
+    def forward(self, alpha, grid_x, grid_y, landmarks) -> tuple:
+        in_data = torch.cat((alpha, landmarks, grid_x, grid_y), 1)
         x = self.seq(in_data)
         return self.v(x), self.u(x), self.p(x)
