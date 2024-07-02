@@ -93,31 +93,34 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
         grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
-        rho_u, rho_v, rho, energy, omega = [[None] * num_samples for _ in range(5)]
+        u, v, p, energy, omega = [[None] * num_samples for _ in range(5)]
         with multiprocessing.Pool() as pool:
             args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(get_flow_fields(source, indices))]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
-                rho_u[i] = r_u.flatten()
-                rho_v[i] = r_v.flatten()
-                rho[i] = r.flatten()
+                r_raw = r.flatten()
+                u_raw = np.divide(r_u.flatten(), r_raw, np.zeros_like(r_raw), where=r_raw != 0)
+                v_raw = np.divide(r_v.flatten(), r_raw, np.zeros_like(r_raw), where=r_raw != 0)
+                u[i] = u_raw
+                v[i] = v_raw
+                p[i] = 1 / 2 * r_raw * (u_raw ** 2 + v_raw ** 2)
                 energy[i] = e.flatten()
                 omega[i] = o.flatten()
 
     with h5py.File(train_path, 'w') as dest:
         dest['landmarks'] = landmarks[:train_end]
         dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
-        dest['rho_u'] = rho_u[:train_end]
-        dest['rho_v'] = rho_v[:train_end]
-        dest['rho'] = rho[:train_end]
+        dest['u'] = u[:train_end]
+        dest['v'] = v[:train_end]
+        dest['p'] = p[:train_end]
         dest['energy'] = energy[:train_end]
         dest['omega'] = omega[:train_end]
 
     with h5py.File(test_path, 'w') as dest:
         dest['landmarks'] = landmarks[train_end:]
         dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
-        dest['rho_u'] = rho_u[train_end:]
-        dest['rho_v'] = rho_v[train_end:]
-        dest['rho'] = rho[train_end:]
+        dest['u'] = u[train_end:]
+        dest['v'] = v[train_end:]
+        dest['p'] = p[train_end:]
         dest['energy'] = energy[train_end:]
         dest['omega'] = omega[train_end:]
 
