@@ -31,9 +31,7 @@ def train_model(save_path: str):
     train_loader = DataLoader(train_data, batch_size=4, shuffle=True, num_workers=8)
 
     in_size = train_data.landmarks[0].shape[0] * 2
-    grid_x = torch.tensor(train_data.grid_x, dtype=torch.float32).to(device)
-    grid_y = torch.tensor(train_data.grid_y, dtype=torch.float32).to(device)
-    model = Model(grid_x, grid_y, in_size)
+    model = Model(len(train_data.grid_x), in_size)
     model = model.to(device)
 
     epochs = 40
@@ -53,7 +51,11 @@ def train_model(save_path: str):
             momentum_x = momentum_x.to(device)
             momentum_y = momentum_y.to(device)
 
-            x, y = model.forward(landmarks)
+            batch_size = landmarks.size()[0]
+            grid_x = torch.tensor(train_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
+            grid_y = torch.tensor(train_data.grid_y, dtype=torch.float32).to(device).repeat(batch_size, 1)
+
+            x, y = model.forward(grid_x, grid_y, landmarks)
 
             optimizer.zero_grad()
             batch_loss = loss(x, momentum_x) + loss(y, momentum_y)
@@ -79,9 +81,7 @@ def evaluate_model(model_path: str):
     test_loader = DataLoader(test_data, batch_size=4, shuffle=True, num_workers=8)
 
     in_size = test_data.landmarks[0].shape[0] * 2
-    grid_x = torch.tensor(test_data.grid_x, dtype=torch.float32).to(device)
-    grid_y = torch.tensor(test_data.grid_y, dtype=torch.float32).to(device)
-    model = Model(grid_x, grid_y, in_size)
+    model = Model(len(test_data.grid_x), in_size)
     model.load_state_dict(torch.load(model_path))
     model = model.to(device)
 
@@ -94,7 +94,11 @@ def evaluate_model(model_path: str):
         momentum_x = momentum_x.to(device)
         momentum_y = momentum_y.to(device)
 
-        x, y = model.forward(landmarks)
+        batch_size = landmarks.size()[0]
+        grid_x = torch.tensor(test_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
+        grid_y = torch.tensor(test_data.grid_y, dtype=torch.float32).to(device).repeat(batch_size, 1)
+
+        x, y = model.forward(grid_x, grid_y, landmarks)
 
         losses.append(loss(x, momentum_x).item())
         losses.append(loss(y, momentum_y).item())
