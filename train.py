@@ -4,10 +4,10 @@ import torch
 import tqdm
 from torch.nn import MSELoss
 from torch.optim import AdamW
-from torch.optim.lr_scheduler import ReduceLROnPlateau
 from torch.utils.data import DataLoader
 
 from airfoil_dataset import AirfoilDataset
+from loss_tracker import LossTracker
 from model import Model
 from visualization import plot_training_history
 
@@ -36,14 +36,12 @@ def train_model(save_path: str):
 
     epochs = 40
     optimizer = AdamW(model.parameters(), lr=0.000001)
-    scheduler = ReduceLROnPlateau(optimizer, mode='min', patience=5, threshold=1e-4)
     loss = MSELoss()
 
-    losses = []
-    lr_history = []
+    loss_tracker = LossTracker('total')
 
     for e in range(epochs):
-        epochs_losses = []
+
         prog = tqdm.tqdm(train_loader, desc=f'Epoch {e}')
         for batch in prog:
             optimizer.zero_grad()
@@ -65,17 +63,13 @@ def train_model(save_path: str):
             batch_loss.backward()
             optimizer.step()
 
-            epochs_losses.append(batch_loss.item())
+            loss_tracker.batch_update(total=batch_loss.item())
 
-        mean_epoch_loss = np.mean(epochs_losses)
-        lr_history.append(optimizer.param_groups[0]['lr'])
-
-        losses.append(mean_epoch_loss)
-        scheduler.step(mean_epoch_loss)
-        prog.write(f'Epoch {e} loss: {losses[-1]}')
+        loss_tracker.epoch_update()
+        prog.write(f'Epoch {e} loss: {loss_tracker.loss_history['total'][-1]}')
         torch.save(model.state_dict(), save_path)
 
-    plot_training_history(losses, lr_history)
+    plot_training_history(loss_tracker)
     plt.show()
 
 
