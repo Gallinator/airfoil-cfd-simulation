@@ -96,7 +96,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         os.remove(test_path)
 
     with (h5pickle.File(source_path, 'r') as source):
-        landmarks = source['shape']['landmarks'][()][:num_samples]
+        landmarks = source['shape']['landmarks'][()]
         num_airfoils = len(landmarks)
 
         indices = np.arange(num_airfoils, dtype=int)
