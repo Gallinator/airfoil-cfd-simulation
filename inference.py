@@ -1,10 +1,6 @@
-import random
-
-import bezier.curve
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
-
 import torch
 from airfoil_dataset import AirfoilDataset
 from model import Model
@@ -43,7 +39,7 @@ def sample_beziers(interactor: AirfoilInteractor) -> np.ndarray:
     return np.concatenate((lower_points.T, upper_points.T))
 
 
-def main():
+def wait_custom_airfoil() -> np.ndarray:
     upper_polygon = Polygon(np.array(DEFAULT_BEZIER_NODES), animated=True)
     fig, ax = plt.subplots()
     ax.add_patch(upper_polygon)
@@ -51,7 +47,11 @@ def main():
     ax.set_ylim((-0.5, 0.5))
     ax.set_xlim((-0.5, 1.5))
     plt.show()
+    return sample_beziers(airfoil_interactor)
 
+
+def main():
+    landmarks = wait_custom_airfoil()
     # Needed only to load the grids
     data = AirfoilDataset('data/test_airfoils.h5')
     grid_x = torch.tensor(data.grid_x, dtype=torch.float32).to(device)
@@ -62,7 +62,7 @@ def main():
     model.load_state_dict(torch.load('models/linear.pt'))
     model = model.to(device)
 
-    landmark = torch.tensor(sample_beziers(airfoil_interactor), dtype=torch.float32)
+    landmark = torch.tensor(landmarks, dtype=torch.float32)
     landmark = torch.unsqueeze(landmark, 0).to(device)
     alpha = torch.tensor([4], dtype=torch.float32)
     alpha = torch.unsqueeze(alpha, 0).to(device)
