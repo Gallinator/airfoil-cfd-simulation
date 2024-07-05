@@ -197,17 +197,15 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
         grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
-        u, v, p, energy, omega = [[None] * num_samples for _ in range(5)]
+        u, v, rho, energy, omega = [[None] * num_samples for _ in range(5)]
         with multiprocessing.Pool() as pool:
             flow_fields = get_flow_fields(source, indices.tolist(), alphas)
             args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(flow_fields)]
             for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
-                r_raw = r.flatten()
-                u_raw = np.divide(r_u.flatten(), r_raw, np.zeros_like(r_raw), where=r_raw != 0)
-                v_raw = np.divide(r_v.flatten(), r_raw, np.zeros_like(r_raw), where=r_raw != 0)
-                u[i] = u_raw
-                v[i] = v_raw
-                p[i] = 1 / 2 * r_raw * (u_raw ** 2 + v_raw ** 2)
+                r_flat = r.flatten()
+                u[i] = np.divide(r_u.flatten(), r_flat, np.zeros_like(r_flat), where=r_flat != 0)
+                v[i] = np.divide(r_v.flatten(), r_flat, np.zeros_like(r_flat), where=r_flat != 0)
+                rho[i] = r_flat
                 energy[i] = e.flatten()
                 omega[i] = o.flatten()
 
@@ -219,10 +217,10 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
         norm_landmarks = normalize_landmarks(landmarks, grid_scaler)
 
-        train_u, train_v, train_p, train_e, train_omega, feature_scaler = normalize_features(
+        train_u, train_v, train_r, train_e, train_omega, feature_scaler = normalize_features(
             u[:train_end],
             v[:train_end],
-            p[:train_end],
+            rho[:train_end],
             energy[:train_end],
             omega[:train_end])
 
@@ -232,14 +230,14 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['grid'] = np.array([norm_grid_x, norm_grid_y])
         dest['u'] = train_u
         dest['v'] = train_v
-        dest['p'] = train_p
+        dest['rho'] = train_r
         dest['energy'] = train_e
         dest['omega'] = train_omega
 
-    test_u, test_v, test_p, test_e, test_omega, _ = normalize_features(
+    test_u, test_v, test_r, test_e, test_omega, _ = normalize_features(
         u[train_end:],
         v[train_end:],
-        p[train_end:],
+        rho[train_end:],
         energy[train_end:],
         omega[train_end:],
         scaler=feature_scaler)
@@ -250,7 +248,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['grid'] = np.array([norm_grid_x, norm_grid_y])
         dest['u'] = test_u
         dest['v'] = test_v
-        dest['p'] = test_p
+        dest['rho'] = test_r
         dest['energy'] = test_e
         dest['omega'] = test_omega
 
