@@ -77,6 +77,12 @@ def main():
 
     pred_u, pred_v, pred_rho = model.forward(alpha, g_x, g_y, landmark.flatten(start_dim=1))
     pred_u, pred_v, pred_rho = pred_u.numpy(force=True), pred_v.numpy(force=True), pred_rho.numpy(force=True)
+    pred_u, pred_v, pred_rho, _, _ = denormalize_features(pred_u,
+                                                          pred_v,
+                                                          pred_rho,
+                                                          np.ones_like(pred_rho),
+                                                          np.ones_like(pred_rho),
+                                                          scaler=features_scaler)
 
     plot_airfoil(alpha.numpy(force=True)[0][0],
                  landmark.numpy(force=True)[0],
