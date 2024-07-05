@@ -46,20 +46,20 @@ def train_model(save_path: str):
         for batch in prog:
             optimizer.zero_grad()
 
-            alpha, landmarks, u, v, p = batch
+            alpha, landmarks, u, v, rho = batch
             landmarks = landmarks.flatten(start_dim=1).to(device)
             alpha = alpha.to(device)
             u = u.to(device)
             v = v.to(device)
-            p = p.to(device)
+            rho = rho.to(device)
 
             batch_size = landmarks.size()[0]
             grid_x = torch.tensor(train_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
             grid_y = torch.tensor(train_data.grid_y, dtype=torch.float32).to(device).repeat(batch_size, 1)
 
-            pred_u, pred_v, pred_p = model.forward(alpha, grid_x, grid_y, landmarks)
+            pred_u, pred_v, pred_rho = model.forward(alpha, grid_x, grid_y, landmarks)
 
-            batch_loss = loss(u, pred_u) + loss(v, pred_v) + loss(p, pred_p)
+            batch_loss = loss(u, pred_u) + loss(v, pred_v) + loss(rho, pred_rho)
             batch_loss.backward()
             optimizer.step()
 
@@ -86,22 +86,22 @@ def evaluate_model(model_path: str):
     losses = []
 
     for batch in test_loader:
-        alpha, landmarks, u, v, p = batch
+        alpha, landmarks, u, v, rho = batch
         landmarks = landmarks.flatten(start_dim=1).to(device)
         alpha = alpha.to(device)
         u = u.to(device)
         v = v.to(device)
-        p = p.to(device)
+        rho = rho.to(device)
 
         batch_size = landmarks.size()[0]
         grid_x = torch.tensor(test_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
         grid_y = torch.tensor(test_data.grid_y, dtype=torch.float32).to(device).repeat(batch_size, 1)
 
-        pred_u, pred_v, pred_p = model.forward(alpha, grid_x, grid_y, landmarks)
+        pred_u, pred_v, pred_rho = model.forward(alpha, grid_x, grid_y, landmarks)
 
         losses.append(loss(u, pred_u).item())
         losses.append(loss(v, pred_v).item())
-        losses.append(loss(p, pred_p).item())
+        losses.append(loss(rho, pred_rho).item())
 
     print(f'Evaluation MSE: {np.mean(losses)}')
 
