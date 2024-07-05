@@ -84,14 +84,14 @@ def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
     y = ff['y'][()]
     airfoil_mask = get_mask(airfoil_poly, sample_grid).reshape(sample_grid[0].shape)
 
-    r_u = sample_gridded_values(sample_grid, ff['rho_u'][()], (x, y))
-    r_u[airfoil_mask] = AIRFOIL_MASK_VALUE
+    rho_u = sample_gridded_values(sample_grid, ff['rho_u'][()], (x, y))
+    rho_u[airfoil_mask] = AIRFOIL_MASK_VALUE
 
-    r_v = sample_gridded_values(sample_grid, ff['rho_v'][()], (x, y))
-    r_v[airfoil_mask] = AIRFOIL_MASK_VALUE
+    rho_v = sample_gridded_values(sample_grid, ff['rho_v'][()], (x, y))
+    rho_v[airfoil_mask] = AIRFOIL_MASK_VALUE
 
-    r = sample_gridded_values(sample_grid, ff['rho'][()], (x, y))
-    r[airfoil_mask] = AIRFOIL_MASK_VALUE
+    rho = sample_gridded_values(sample_grid, ff['rho'][()], (x, y))
+    rho[airfoil_mask] = AIRFOIL_MASK_VALUE
 
     e = sample_gridded_values(sample_grid, ff['e'][()], (x, y))
     e[airfoil_mask] = AIRFOIL_MASK_VALUE
@@ -99,7 +99,7 @@ def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
     o = sample_gridded_values(sample_grid, ff['omega'][()], (x, y))
     o[airfoil_mask] = AIRFOIL_MASK_VALUE
 
-    return i, r_u, r_v, r, e, o
+    return i, rho_u, rho_v, rho, e, o
 
 
 def get_flow_fields(src: File, indices, alphas) -> list:
