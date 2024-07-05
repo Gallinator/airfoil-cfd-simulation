@@ -3,6 +3,7 @@ from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 import torch
 from airfoil_dataset import AirfoilDataset
+from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features
 from model import Model
 from airfoil_interactor import AirfoilInteractor
 
@@ -51,7 +52,12 @@ def wait_custom_airfoil() -> np.ndarray:
 
 
 def main():
-    landmarks = wait_custom_airfoil()
+    grid_scaler = load_scaler('data/grid_scaler.pkl')
+    features_scaler = load_scaler('data/features_scaler.pkl')
+    alpha_scaler = load_scaler('data/alpha_scaler.pkl')
+
+    landmark = wait_custom_airfoil()
+    landmark = normalize_landmarks(landmark, grid_scaler)
     # Needed only to load the grids
     data = AirfoilDataset('data/test_airfoils.h5')
     grid_x = torch.tensor(data.grid_x, dtype=torch.float32).to(device)
@@ -62,10 +68,10 @@ def main():
     model.load_state_dict(torch.load('models/linear.pt'))
     model = model.to(device)
 
-    landmark = torch.tensor(landmarks, dtype=torch.float32)
-    landmark = torch.unsqueeze(landmark, 0).to(device)
-    alpha = torch.tensor([4], dtype=torch.float32)
-    alpha = torch.unsqueeze(alpha, 0).to(device)
+    landmark = torch.tensor(landmark, dtype=torch.float32)
+    landmark = landmark.unsqueeze(0).to(device)
+    alpha = alpha_scaler.transform([[4]])
+    alpha = torch.tensor(alpha, dtype=torch.float32).to(device)
     g_x = grid_x.unsqueeze(0)
     g_y = grid_y.unsqueeze(0)
 
