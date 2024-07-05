@@ -1,4 +1,4 @@
-import matplotlib
+import math
 import matplotlib.pyplot as plt
 import numpy as np
 from matplotlib.ticker import MaxNLocator
@@ -24,8 +24,8 @@ def plot_training_history(loss_tracker: LossTracker):
     plt.tight_layout()
 
 
-def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.array, grid_y: np.array, u: np.array, v: np.array,
-                 p: np.array):
+def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.ndarray, grid_y: np.ndarray, u: np.ndarray, v: np.ndarray,
+                 rho: np.ndarray):
     color = np.sqrt(np.square(v) + np.square(u))
     vmin, vmax = np.min(color), np.max(color)
     grid_edge_size = int(math.sqrt(len(grid_x)))
@@ -33,7 +33,7 @@ def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.array, grid_y: np.arra
     fig, axs = plt.subplots(1, 3, figsize=(18, 6))
     fig.suptitle(f'Airflow simulation, AoA={int(alpha)}', fontsize=16)
 
-    ax_v, ax_p = axs
+    ax_v, ax_rho, ax_stream = axs
     ax_v.set_title(f"Flow velocity")
     ax_v.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
     ax_v.quiver(grid_x, grid_y, u, v, color,
@@ -45,12 +45,13 @@ def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.array, grid_y: np.arra
                 headaxislength=4,
                 width=0.002,
                 cmap='jet')
-    fig.colorbar(matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(vmin, vmax), cmap=COLORMAP),
-                 orientation='vertical',
-                 label='Velocity',
-                 ax=ax_v)
+    ax_v.set_aspect('equal')
 
-    ax_stream = axs[2]
+    ax_rho.set_title(f"Flow density")
+    ax_rho.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
+    ax_rho.scatter(grid_x, grid_y, c=rho, s=5)
+    ax_rho.set_aspect('equal')
+
     ax_stream.set_title(f"Airflow")
     ax_stream.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
     ax_stream.streamplot(grid_x.reshape(grid_edge_size, -1).T,
