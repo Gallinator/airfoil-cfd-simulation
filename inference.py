@@ -75,14 +75,14 @@ def main():
     g_x = grid_x.unsqueeze(0)
     g_y = grid_y.unsqueeze(0)
 
-    pred_u, pred_v, pred_p = model.forward(alpha, g_x, g_y, landmark.flatten(start_dim=1))
-    pred_u, pred_v, pred_p = pred_u.numpy(force=True), pred_v.numpy(force=True), pred_p.numpy(force=True)
+    pred_u, pred_v, pred_rho = model.forward(alpha, g_x, g_y, landmark.flatten(start_dim=1))
+    pred_u, pred_v, pred_rho = pred_u.numpy(force=True), pred_v.numpy(force=True), pred_rho.numpy(force=True)
 
     plot_airfoil(alpha.numpy(force=True)[0][0],
                  landmark.numpy(force=True)[0],
                  data.grid_x,
                  data.grid_y,
-                 pred_u[0], pred_v[0], pred_p[0])
+                 pred_u[0], pred_v[0], pred_rho[0])
 
 
 if __name__ == '__main__':
