@@ -28,8 +28,9 @@ def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.array, grid_y: np.arra
                  p: np.array):
     color = np.sqrt(np.square(v) + np.square(u))
     vmin, vmax = np.min(color), np.max(color)
+    grid_edge_size = int(math.sqrt(len(grid_x)))
 
-    fig, axs = plt.subplots(1, 2, figsize=(16, 5))
+    fig, axs = plt.subplots(1, 3, figsize=(18, 6))
     fig.suptitle(f'Airflow simulation, AoA={int(alpha)}', fontsize=16)
 
     ax_v, ax_p = axs
@@ -49,11 +50,16 @@ def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.array, grid_y: np.arra
                  label='Velocity',
                  ax=ax_v)
 
-    ax_p.set_title(f"Flow dynamic pressure")
-    ax_p.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
-    ax_p.scatter(grid_x, grid_y, c=p)
-    fig.colorbar(matplotlib.cm.ScalarMappable(norm=matplotlib.colors.Normalize(np.min(p), np.max(p)), cmap=COLORMAP),
-                 orientation='vertical',
-                 label='Pressure',
-                 ax=ax_p)
+    ax_stream = axs[2]
+    ax_stream.set_title(f"Airflow")
+    ax_stream.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
+    ax_stream.streamplot(grid_x.reshape(grid_edge_size, -1).T,
+                         grid_y.reshape(grid_edge_size, -1).T,
+                         u.reshape(grid_edge_size, -1).T,
+                         v.reshape(grid_edge_size, -1).T,
+                         color=color.reshape(grid_edge_size, -1).T,
+                         broken_streamlines=False, arrowsize=0, density=2, cmap='jet')
+    ax_stream.set_aspect('equal')
+
+    plt.tight_layout()
     plt.show()
