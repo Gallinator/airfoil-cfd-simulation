@@ -30,26 +30,28 @@ def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.ndarray, grid_y: np.nd
     vmin, vmax = np.min(color), np.max(color)
     grid_edge_size = int(math.sqrt(len(grid_x)))
 
-    fig, axs = plt.subplots(1, 3, figsize=(18, 6))
+    fig, axs = plt.subplots(1, 3, figsize=(18, 6), layout='constrained')
     fig.suptitle(f'Airflow simulation, AoA={int(alpha)}', fontsize=16)
 
     ax_v, ax_rho, ax_stream = axs
     ax_v.set_title(f"Flow velocity")
     ax_v.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
-    ax_v.quiver(grid_x, grid_y, u, v, color,
-                scale_units='xy',
-                units='xy',
-                scale=6,
-                headwidth=2,
-                headlength=4,
-                headaxislength=4,
-                width=0.002,
-                cmap='jet')
+    v_plot = ax_v.quiver(grid_x, grid_y, u, v, color,
+                         scale_units='xy',
+                         units='xy',
+                         scale=6,
+                         headwidth=2,
+                         headlength=4,
+                         headaxislength=4,
+                         width=0.002,
+                         cmap='jet')
+    fig.colorbar(v_plot, ax=ax_v)
     ax_v.set_aspect('equal')
 
     ax_rho.set_title(f"Flow density")
     ax_rho.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
-    ax_rho.scatter(grid_x, grid_y, c=rho, s=5)
+    rho_plot = ax_rho.scatter(grid_x, grid_y, c=rho, s=5)
+    fig.colorbar(rho_plot, ax=ax_rho)
     ax_rho.set_aspect('equal')
 
     ax_stream.set_title(f"Airflow")
@@ -62,5 +64,4 @@ def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.ndarray, grid_y: np.nd
                          broken_streamlines=False, arrowsize=0, density=2, cmap='jet')
     ax_stream.set_aspect('equal')
 
-    plt.tight_layout()
     plt.show()
