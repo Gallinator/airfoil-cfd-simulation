@@ -1,7 +1,9 @@
+import math
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 import torch
+from matplotlib.widgets import Slider
 from airfoil_dataset import AirfoilDataset
 from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features
 from model import Model
