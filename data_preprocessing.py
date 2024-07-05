@@ -1,5 +1,6 @@
 import multiprocessing
 import os.path
+import pickle
 import random
 
 import h5pickle
@@ -10,6 +11,10 @@ import requests
 import tqdm
 from h5py import File
 from scipy.interpolate import griddata
+from sklearn.preprocessing import MinMaxScaler
+
+from airfoil_dataset import AirfoilDataset
+from visualization import plot_airfoil
 
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
 TRAIN_FILE = 'train_airfoils.h5'
@@ -32,6 +37,36 @@ def download_data(dest_dir: str):
                 for chunk in res.iter_content(chunk_size=8192):
                     progress.update(len(chunk))
                     file.write(chunk)
+
+
+def denormalize_landmarks(landmarks: np.ndarray, scaler) -> np.ndarray:
+    feature_mat = landmarks.reshape(-1, 2)
+    denorm_feature_mat = scaler.inverse_transform(feature_mat)
+    return denorm_feature_mat.reshape(landmarks.shape)
+
+
+def denormalize_features(u, v, *features, scaler) -> list:
+    num_features = len(features)
+    feature_len = len(features[0][0])
+    feature_mat = np.array(features).reshape(num_features, -1).T
+    u_flat, v_flat = np.array(u).flatten(), np.array(v).flatten()
+    vel = np.sqrt(np.square(u_flat) + np.square(v_flat)).reshape(-1, 1)
+
+    feature_mat = np.concatenate((feature_mat, vel), axis=1)
+
+    denorm_feature_mat = scaler.inverse_transform(feature_mat)
+    u_denorm = (u_flat / scaler.scale_[-1]).reshape(-1, feature_len)
+    v_denorm = (v_flat / scaler.scale_[-1]).reshape(-1, feature_len)
+    denorm_features = denorm_feature_mat[:, :-1].T.reshape(num_features, -1, feature_len)
+
+    return [u_denorm, v_denorm] + denorm_features.tolist()
+
+
+def denormalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler) -> tuple:
+    grid_mat = np.concatenate((grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)), axis=1)
+    denorm_grid_mat = scaler.inverse_transform(grid_mat)
+    denorm_grid_x, denorm_grid_y = np.hsplit(denorm_grid_mat, 2)
+    return denorm_grid_x.flatten(), denorm_grid_y.flatten()
 
 
 def get_mask(airfoil_poly: np.ndarray, grid: tuple):
@@ -87,6 +122,60 @@ def get_flow_fields(src: File, indices, alphas) -> list:
     return ff
 
 
+def normalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler=None) -> tuple:
+    grid_mat = np.concatenate((grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)), axis=1)
+    if scaler is None:
+        scaler = MinMaxScaler().fit(grid_mat)
+    norm_grid_mat = scaler.transform(grid_mat)
+    norm_grid_x, norm_grid_y = np.hsplit(norm_grid_mat, 2)
+    return norm_grid_x.flatten(), norm_grid_y.flatten(), scaler
+
+
+def normalize_landmarks(landmarks: np.ndarray, grid_scaler):
+    feature_mat = landmarks.reshape(-1, 2)
+    norm_feature_mat = grid_scaler.transform(feature_mat)
+    return norm_feature_mat.reshape(landmarks.shape)
+
+
+def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> list:
+    num_features = len(features)
+    feature_len = len(features[0][0])
+    u_flat = np.array(u).flatten()
+    v_flat = np.array(v).flatten()
+    vel = np.sqrt(np.square(u_flat) + np.square(v_flat)).reshape(-1, 1)
+    feature_mat = np.array(features).reshape(num_features, -1).T
+    feature_mat = np.concatenate((feature_mat, vel), axis=1)
+
+    feat_scaler = scaler
+    if feat_scaler is None:
+        feat_scaler = MinMaxScaler().fit(feature_mat)
+    norm_feature_mat = feat_scaler.transform(feature_mat)
+
+    u_norm = (u_flat * feat_scaler.scale_[-1]).reshape(-1, feature_len)
+    v_norm = (v_flat * feat_scaler.scale_[-1]).reshape(-1, feature_len)
+    norm_feature_mat = norm_feature_mat[:, :-1]
+    return [u_norm, v_norm] + norm_feature_mat.T.reshape(num_features, -1, feature_len).tolist() + [feat_scaler]
+
+
+def normalize_alpha(alpha, scaler=None) -> tuple:
+    a = np.array(alpha).reshape(-1, 1)
+    if scaler is None:
+        scaler = MinMaxScaler().fit(a)
+    return scaler.transform(a).flatten(), scaler
+
+
+def denormalize_alpha(alpha, scaler) -> np.ndarray:
+    return scaler.inverse_transform(alpha)
+
+
+def save_scaler(scaler, path: str):
+    pickle.dump(scaler, open(path, 'wb'))
+
+
+def load_scaler(path: str):
+    return pickle.load(open(path, 'rb'))
+
+
 def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int, train_size: float):
     train_path = os.path.join(dest_path, TRAIN_FILE)
     test_path = os.path.join(dest_path, TEST_FILE)
@@ -123,26 +212,51 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
                 omega[i] = o.flatten()
 
         alphas = [int(a) for _, a in enumerate(alphas)]
+        norm_alphas, alpha_scaler = normalize_alpha(alphas)
+
+        grid_x, grid_y = grid_x.flatten(), grid_y.flatten()
+        norm_grid_x, norm_grid_y, grid_scaler = normalize_grid(grid_x, grid_y)
+
+        norm_landmarks = normalize_landmarks(landmarks, grid_scaler)
+
+        train_u, train_v, train_p, train_e, train_omega, feature_scaler = normalize_features(
+            u[:train_end],
+            v[:train_end],
+            p[:train_end],
+            energy[:train_end],
+            omega[:train_end])
 
     with h5py.File(train_path, 'w') as dest:
-        dest['alpha'] = alphas[:train_end]
-        dest['landmarks'] = landmarks[:train_end]
-        dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
-        dest['u'] = u[:train_end]
-        dest['v'] = v[:train_end]
-        dest['p'] = p[:train_end]
-        dest['energy'] = energy[:train_end]
-        dest['omega'] = omega[:train_end]
+        dest['alpha'] = norm_alphas[:train_end]
+        dest['landmarks'] = norm_landmarks[:train_end]
+        dest['grid'] = np.array([norm_grid_x, norm_grid_y])
+        dest['u'] = train_u
+        dest['v'] = train_v
+        dest['p'] = train_p
+        dest['energy'] = train_e
+        dest['omega'] = train_omega
+
+    test_u, test_v, test_p, test_e, test_omega, _ = normalize_features(
+        u[train_end:],
+        v[train_end:],
+        p[train_end:],
+        energy[train_end:],
+        omega[train_end:],
+        scaler=feature_scaler)
 
     with h5py.File(test_path, 'w') as dest:
-        dest['alpha'] = alphas[train_end:]
-        dest['landmarks'] = landmarks[train_end:]
-        dest['grid'] = np.array([grid_x.flatten(), grid_y.flatten()])
-        dest['u'] = u[train_end:]
-        dest['v'] = v[train_end:]
-        dest['p'] = p[train_end:]
-        dest['energy'] = energy[train_end:]
-        dest['omega'] = omega[train_end:]
+        dest['alpha'] = norm_alphas[train_end:]
+        dest['landmarks'] = norm_landmarks[train_end:]
+        dest['grid'] = np.array([norm_grid_x, norm_grid_y])
+        dest['u'] = test_u
+        dest['v'] = test_v
+        dest['p'] = test_p
+        dest['energy'] = test_e
+        dest['omega'] = test_omega
+
+    save_scaler(alpha_scaler, os.path.join(dest_path, 'alpha_scaler.pkl'))
+    save_scaler(grid_scaler, os.path.join(dest_path, 'grid_scaler.pkl'))
+    save_scaler(feature_scaler, os.path.join(dest_path, 'features_scaler.pkl'))
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
