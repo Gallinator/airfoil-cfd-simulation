@@ -46,7 +46,7 @@ def train_model(save_path: str):
         for batch in prog:
             optimizer.zero_grad()
 
-            alpha, landmarks, u, v, rho = batch
+            alpha, landmarks, u, v, rho, _ = batch
             landmarks = landmarks.flatten(start_dim=1).to(device)
             alpha = alpha.to(device)
             u = u.to(device)
@@ -86,7 +86,7 @@ def evaluate_model(model_path: str):
     losses = []
 
     for batch in test_loader:
-        alpha, landmarks, u, v, rho = batch
+        alpha, landmarks, u, v, rho, _ = batch
         landmarks = landmarks.flatten(start_dim=1).to(device)
         alpha = alpha.to(device)
         u = u.to(device)

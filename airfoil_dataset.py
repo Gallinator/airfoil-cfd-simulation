@@ -8,6 +8,7 @@ class AirfoilDataset(Dataset):
         self.file = h5py.File(data_path, 'r')
         self.alphas = self.file['alpha']
         self.landmarks = self.file['landmarks']
+        self.masks = self.file['masks']
         self.u = self.file['u']
         self.v = self.file['v']
         self.r = self.file['rho']
@@ -16,11 +17,12 @@ class AirfoilDataset(Dataset):
     def __getitem__(self, item):
         alpha = torch.tensor([self.alphas[item]], dtype=torch.float32)
         landmark = torch.tensor(self.landmarks[item], dtype=torch.float32)
+        mask = torch.tensor(self.masks[item], dtype=torch.float32)
         u = torch.tensor(self.u[item], dtype=torch.float32)
         v = torch.tensor(self.v[item], dtype=torch.float32)
         r = torch.tensor(self.r[item], dtype=torch.float32)
 
-        return alpha, landmark, u, v, r
+        return alpha, landmark, u, v, r, mask
 
     def __len__(self):
         return len(self.landmarks)
