@@ -5,7 +5,7 @@ from matplotlib.patches import Polygon
 import torch
 from matplotlib.widgets import Slider
 from airfoil_dataset import AirfoilDataset
-from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features
+from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features, get_mask
 from model import Model
 from airfoil_interactor import AirfoilInteractor
 
@@ -85,6 +85,9 @@ def main():
     data = AirfoilDataset('data/test_airfoils.h5')
     grid_x = torch.tensor(data.grid_x, dtype=torch.float32).to(device)
     grid_y = torch.tensor(data.grid_y, dtype=torch.float32).to(device)
+    landmark = normalize_landmarks(landmark, grid_scaler)
+    airfoil_mask = get_mask(landmark, (data.grid_x, data.grid_y)).flatten()
+    airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).to(device).unsqueeze(0)
 
     in_size = data.landmarks[0].shape[0] * 2
     model = Model(len(grid_x), in_size)
@@ -109,6 +112,7 @@ def main():
 
     plot_airfoil(alpha.numpy(force=True)[0][0],
                  landmark.numpy(force=True)[0],
+                 airfoil_mask.numpy(force=True)[0],
                  data.grid_x,
                  data.grid_y,
                  pred_u[0], pred_v[0], pred_rho[0])

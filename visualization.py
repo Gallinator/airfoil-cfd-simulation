@@ -24,11 +24,16 @@ def plot_training_history(loss_tracker: LossTracker):
     plt.tight_layout()
 
 
-def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.ndarray, grid_y: np.ndarray, u: np.ndarray, v: np.ndarray,
+def plot_airfoil(alpha, landmarks: np.ndarray,
+                 mask: np.ndarray,
+                 grid_x: np.ndarray,
+                 grid_y: np.ndarray,
+                 u: np.ndarray,
+                 v: np.ndarray,
                  rho: np.ndarray):
     color = np.sqrt(np.square(v) + np.square(u))
-    vmin, vmax = np.min(color), np.max(color)
     grid_edge_size = int(math.sqrt(len(grid_x)))
+    airfoil_mask = mask != 1.0
 
     fig, axs = plt.subplots(1, 3, figsize=(18, 6), layout='constrained')
     fig.suptitle(f'Airflow simulation, AoA={int(alpha)}', fontsize=16)
@@ -36,7 +41,11 @@ def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.ndarray, grid_y: np.nd
     ax_v, ax_rho, ax_stream = axs
     ax_v.set_title(f"Flow velocity")
     ax_v.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
-    v_plot = ax_v.quiver(grid_x, grid_y, u, v, color,
+    v_plot = ax_v.quiver(grid_x[airfoil_mask],
+                         grid_y[airfoil_mask],
+                         u[airfoil_mask],
+                         v[airfoil_mask],
+                         color[airfoil_mask],
                          scale_units='xy',
                          units='xy',
                          scale=6,
@@ -50,7 +59,10 @@ def plot_airfoil(alpha, landmarks: np.ndarray, grid_x: np.ndarray, grid_y: np.nd
 
     ax_rho.set_title(f"Flow density")
     ax_rho.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
-    rho_plot = ax_rho.scatter(grid_x, grid_y, c=rho, s=5)
+    rho_plot = ax_rho.scatter(grid_x[airfoil_mask],
+                              grid_y[airfoil_mask],
+                              c=rho[airfoil_mask],
+                              s=5)
     fig.colorbar(rho_plot, ax=ax_rho)
     ax_rho.set_aspect('equal')
 
