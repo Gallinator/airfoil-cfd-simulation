@@ -45,7 +45,7 @@ def denormalize_landmarks(landmarks: np.ndarray, scaler) -> np.ndarray:
     return denorm_feature_mat.reshape(landmarks.shape)
 
 
-def denormalize_features(u, v, *features, scaler) -> list:
+def denormalize_features(u, v, *features, scaler) -> np.ndarray:
     num_features = len(features)
     feature_len = len(features[0][0])
     feature_mat = np.array(features).reshape(num_features, -1).T
@@ -59,7 +59,7 @@ def denormalize_features(u, v, *features, scaler) -> list:
     v_denorm = (v_flat / scaler.scale_[-1]).reshape(-1, feature_len)
     denorm_features = denorm_feature_mat[:, :-1].T.reshape(num_features, -1, feature_len)
 
-    return [u_denorm, v_denorm] + denorm_features.tolist()
+    return np.append([u_denorm, v_denorm], denorm_features, axis=0)
 
 
 def denormalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler) -> tuple:
