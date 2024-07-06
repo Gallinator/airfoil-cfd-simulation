@@ -60,6 +60,7 @@ def edit_custom_airfoil() -> tuple:
     airfoil_interactor = AirfoilInteractor(airfoil_ax, upper_polygon)
     airfoil_ax.set_ylim((-0.5, 0.5))
     airfoil_ax.set_xlim((-0.5, 1.5))
+    airfoil_ax.set_aspect('equal')
 
     alpha_slider = Slider(ax=alpha_ax, label='Angle of attack', valmin=-45, valmax=45, valstep=1, valinit=DEFAULT_ALPHA)
 
