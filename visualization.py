@@ -35,7 +35,7 @@ def plot_airfoil(alpha, landmarks: np.ndarray,
     grid_edge_size = int(math.sqrt(len(grid_x)))
     airfoil_mask = mask != 1.0
 
-    fig, axs = plt.subplots(1, 3, figsize=(18, 6), layout='constrained')
+    fig, axs = plt.subplots(1, 3, figsize=(36, 12), layout='constrained')
     fig.suptitle(f'Airflow simulation, AoA={int(alpha)}', fontsize=16)
 
     ax_v, ax_rho, ax_stream = axs
