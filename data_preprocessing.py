@@ -99,7 +99,7 @@ def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
     o = sample_gridded_values(sample_grid, ff['omega'][()], (x, y))
     o[airfoil_mask] = AIRFOIL_MASK_VALUE
 
-    return i, rho_u, rho_v, rho, e, o
+    return i, rho_u, rho_v, rho, e, o, 1 * airfoil_mask
 
 
 def get_flow_fields(src: File, indices, alphas) -> list:
@@ -197,17 +197,18 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
         grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
-        u, v, rho, energy, omega = [[None] * num_samples for _ in range(5)]
+        u, v, rho, energy, omega, masks = [[None] * num_samples for _ in range(6)]
         with multiprocessing.Pool() as pool:
             flow_fields = get_flow_fields(source, indices.tolist(), alphas)
             args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(flow_fields)]
-            for i, r_u, r_v, r, e, o in pool.starmap(airfoil_sampling_task, args):
+            for i, r_u, r_v, r, e, o, m in pool.starmap(airfoil_sampling_task, args):
                 r_flat = r.flatten()
                 u[i] = np.divide(r_u.flatten(), r_flat, np.zeros_like(r_flat), where=r_flat != 0)
                 v[i] = np.divide(r_v.flatten(), r_flat, np.zeros_like(r_flat), where=r_flat != 0)
                 rho[i] = r_flat
                 energy[i] = e.flatten()
                 omega[i] = o.flatten()
+                masks[i] = m.flatten()
 
         alphas = [int(a) for _, a in enumerate(alphas)]
         norm_alphas, alpha_scaler = normalize_alpha(alphas)
@@ -227,6 +228,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
     with h5py.File(train_path, 'w') as dest:
         dest['alpha'] = norm_alphas[:train_end]
         dest['landmarks'] = norm_landmarks[:train_end]
+        dest['masks'] = masks[:train_end]
         dest['grid'] = np.array([norm_grid_x, norm_grid_y])
         dest['u'] = train_u
         dest['v'] = train_v
@@ -244,6 +246,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
     with h5py.File(test_path, 'w') as dest:
         dest['alpha'] = norm_alphas[train_end:]
+        dest['masks'] = masks[train_end:]
         dest['landmarks'] = norm_landmarks[train_end:]
         dest['grid'] = np.array([norm_grid_x, norm_grid_y])
         dest['u'] = test_u
