@@ -93,7 +93,7 @@ def main():
 
     landmark = torch.tensor(landmark, dtype=torch.float32)
     landmark = landmark.unsqueeze(0).to(device)
-    alpha = alpha_scaler.transform([[4]])
+    alpha = alpha_scaler.transform([[alpha]])
     alpha = torch.tensor(alpha, dtype=torch.float32).to(device)
     g_x = grid_x.unsqueeze(0)
     g_y = grid_y.unsqueeze(0)
