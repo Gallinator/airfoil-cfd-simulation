@@ -85,7 +85,6 @@ def generate_free_flow_grids(alpha, shape):
 def main():
     grid_scaler = load_scaler('data/grid_scaler.pkl')
     features_scaler = load_scaler('data/features_scaler.pkl')
-    alpha_scaler = load_scaler('data/alpha_scaler.pkl')
 
     landmark, alpha = edit_custom_airfoil()
 
@@ -102,8 +101,6 @@ def main():
 
     landmark = torch.tensor(landmark, dtype=torch.float32)
     landmark = landmark.unsqueeze(0).to(device)
-    alpha = alpha_scaler.transform([[alpha]])
-    alpha = torch.tensor(alpha, dtype=torch.float32).to(device)
     g_x, g_y = generate_free_flow_grids(alpha, data.grid_shape)
     g_x, g_y = g_x.to(device), g_y.to(device)
 
