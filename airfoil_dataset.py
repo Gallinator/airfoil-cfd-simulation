@@ -13,6 +13,8 @@ class AirfoilDataset(Dataset):
         self.v = self.file['v']
         self.r = self.file['rho']
         self.e = self.file['energy']
+        self.grid_coords_x, self.grid_coords_y = self.file['grid'][()]
+        self.grid_shape = (128, 128)
 
     def __getitem__(self, item):
         alpha = torch.tensor([self.alphas[item]], dtype=torch.float32)
