@@ -74,6 +74,14 @@ def edit_custom_airfoil() -> tuple:
     return sample_beziers(airfoil_interactor), slope_to_deg(alpha_line.get_slope())
 
 
+def generate_free_flow_grids(alpha, shape):
+    grid_x = np.full(shape, math.cos(math.radians(alpha)) * 1)
+    grid_x = torch.tensor(grid_x, dtype=torch.float32).unsqueeze(0)
+    grid_y = np.full(shape, math.sin(math.radians(alpha)) * 1)
+    grid_y = torch.tensor(grid_y, dtype=torch.float32).unsqueeze(0)
+    return grid_x, grid_y
+
+
 def main():
     grid_scaler = load_scaler('data/grid_scaler.pkl')
     features_scaler = load_scaler('data/features_scaler.pkl')
