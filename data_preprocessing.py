@@ -85,16 +85,16 @@ def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
     airfoil_mask = get_mask(airfoil_poly, sample_grid).reshape(sample_grid[0].shape)
 
     rho_u = sample_gridded_values(sample_grid, ff['rho_u'][()], (x, y))
-    rho_u[airfoil_mask] = AIRFOIL_MASK_VALUE
+    rho_u[airfoil_mask] = np.mean(rho_u[~airfoil_mask])
 
     rho_v = sample_gridded_values(sample_grid, ff['rho_v'][()], (x, y))
-    rho_v[airfoil_mask] = AIRFOIL_MASK_VALUE
+    rho_v[airfoil_mask] = np.mean(rho_v[~airfoil_mask])
 
     rho = sample_gridded_values(sample_grid, ff['rho'][()], (x, y))
-    rho[airfoil_mask] = AIRFOIL_MASK_VALUE
+    rho[airfoil_mask] = np.mean(rho[~airfoil_mask])
 
     e = sample_gridded_values(sample_grid, ff['e'][()], (x, y))
-    e[airfoil_mask] = AIRFOIL_MASK_VALUE
+    e[airfoil_mask] = np.mean(e[~airfoil_mask])
 
     o = sample_gridded_values(sample_grid, ff['omega'][()], (x, y))
     o[airfoil_mask] = AIRFOIL_MASK_VALUE
