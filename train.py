@@ -46,12 +46,16 @@ def train_model(save_path: str):
         for batch in prog:
             optimizer.zero_grad()
 
-            alpha, landmarks, u, v, rho, _ = batch
+            grid_x, grid_y, landmarks, u, v, rho, energy, mask = batch
             landmarks = landmarks.flatten(start_dim=1).to(device)
-            alpha = alpha.to(device)
+            grid_x = grid_x.to(device)
+            grid_y = grid_y.to(device)
             u = u.to(device)
             v = v.to(device)
             rho = rho.to(device)
+            energy = energy.to(device)
+            mask = mask.to(device)
+            label = torch.stack((u, v, rho, energy), 1)
 
             batch_size = landmarks.size()[0]
             grid_x = torch.tensor(train_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
@@ -86,12 +90,17 @@ def evaluate_model(model_path: str):
     losses = []
 
     for batch in test_loader:
-        alpha, landmarks, u, v, rho, _ = batch
+        grid_x, grid_y, landmarks, u, v, rho, energy, mask = batch
         landmarks = landmarks.flatten(start_dim=1).to(device)
         alpha = alpha.to(device)
         u = u.to(device)
         v = v.to(device)
         rho = rho.to(device)
+        energy = energy.to(device)
+        mask = mask.to(device)
+        grid_x = grid_x.to(device)
+        grid_y = grid_y.to(device)
+        label = torch.stack((u, v, rho, energy), 1)
 
         batch_size = landmarks.size()[0]
         grid_x = torch.tensor(test_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
