@@ -91,8 +91,6 @@ def main():
 
     # Needed only to load the grids
     data = AirfoilDataset('data/test_airfoils.h5')
-    grid_x = torch.tensor(data.grid_x, dtype=torch.float32).to(device)
-    grid_y = torch.tensor(data.grid_y, dtype=torch.float32).to(device)
     landmark = normalize_landmarks(landmark, grid_scaler)
     airfoil_mask = get_mask(landmark, (data.grid_coords_x, data.grid_coords_y)).reshape(data.grid_shape)
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).to(device).unsqueeze(0)
@@ -106,8 +104,8 @@ def main():
     landmark = landmark.unsqueeze(0).to(device)
     alpha = alpha_scaler.transform([[alpha]])
     alpha = torch.tensor(alpha, dtype=torch.float32).to(device)
-    g_x = grid_x.unsqueeze(0)
-    g_y = grid_y.unsqueeze(0)
+    g_x, g_y = generate_free_flow_grids(alpha, data.grid_shape)
+    g_x, g_y = g_x.to(device), g_y.to(device)
 
     pred_u, pred_v, pred_rho = model.forward(alpha, g_x, g_y, landmark.flatten(start_dim=1))
     pred_u, pred_v, pred_rho = pred_u.numpy(force=True), pred_v.numpy(force=True), pred_rho.numpy(force=True)
