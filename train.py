@@ -59,9 +59,7 @@ def train_model(save_path: str):
 
             y = model.forward(grid_x, grid_y, landmarks, mask)
 
-            pred_u, pred_v, pred_rho = model.forward(alpha, grid_x, grid_y, landmarks)
-
-            batch_loss = loss(u, pred_u) + loss(v, pred_v) + loss(rho, pred_rho)
+            batch_loss = loss(label, y)
             batch_loss.backward()
             optimizer.step()
 
@@ -101,11 +99,7 @@ def evaluate_model(model_path: str):
 
         y = model.forward(grid_x, grid_y, landmarks, mask)
 
-        pred_u, pred_v, pred_rho = model.forward(alpha, grid_x, grid_y, landmarks)
-
-        losses.append(loss(u, pred_u).item())
-        losses.append(loss(v, pred_v).item())
-        losses.append(loss(rho, pred_rho).item())
+        losses.append(loss(y, label).item())
 
     print(f'Evaluation MSE: {np.mean(losses)}')
 
