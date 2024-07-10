@@ -12,7 +12,7 @@ class AirfoilDataset(Dataset):
         self.u = self.file['u']
         self.v = self.file['v']
         self.r = self.file['rho']
-        self.grid_x, self.grid_y = self.file['grid'][()]
+        self.e = self.file['energy']
 
     def __getitem__(self, item):
         alpha = torch.tensor([self.alphas[item]], dtype=torch.float32)
@@ -21,8 +21,9 @@ class AirfoilDataset(Dataset):
         u = torch.tensor(self.u[item], dtype=torch.float32)
         v = torch.tensor(self.v[item], dtype=torch.float32)
         r = torch.tensor(self.r[item], dtype=torch.float32)
+        e = torch.tensor(self.e[item], dtype=torch.float32)
 
-        return alpha, landmark, u, v, r, mask
+        return alpha, landmark, u, v, r, e, mask
 
     def __len__(self):
         return len(self.landmarks)
