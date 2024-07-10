@@ -96,10 +96,7 @@ def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
     e = sample_gridded_values(sample_grid, ff['e'][()], (x, y))
     e[airfoil_mask] = np.mean(e[~airfoil_mask])
 
-    o = sample_gridded_values(sample_grid, ff['omega'][()], (x, y))
-    o[airfoil_mask] = AIRFOIL_MASK_VALUE
-
-    return i, rho_u, rho_v, rho, e, o, 1 * airfoil_mask
+    return i, rho_u, rho_v, rho, e, 1 * airfoil_mask
 
 
 def get_flow_fields(src: File, indices, alphas) -> list:
@@ -197,17 +194,16 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
         grid_x, grid_y = np.mgrid[-0.5:1.5:sample_grid_size, -1:1:sample_grid_size]
 
-        u, v, rho, energy, omega, masks = [[None] * num_samples for _ in range(6)]
+        u, v, rho, energy, masks = [[None] * num_samples for _ in range(5)]
         with multiprocessing.Pool() as pool:
             flow_fields = get_flow_fields(source, indices.tolist(), alphas)
             args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(flow_fields)]
-            for i, r_u, r_v, r, e, o, m in pool.starmap(airfoil_sampling_task, args):
+            for i, r_u, r_v, r, e, m in pool.starmap(airfoil_sampling_task, args):
                 r_flat = r.flatten()
                 u[i] = np.divide(r_u.flatten(), r_flat, np.zeros_like(r_flat), where=r_flat != 0)
                 v[i] = np.divide(r_v.flatten(), r_flat, np.zeros_like(r_flat), where=r_flat != 0)
                 rho[i] = r_flat
                 energy[i] = e.flatten()
-                omega[i] = o.flatten()
                 masks[i] = m.flatten()
 
         alphas = [int(a) for _, a in enumerate(alphas)]
@@ -218,12 +214,11 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
         norm_landmarks = normalize_landmarks(landmarks, grid_scaler)
 
-        train_u, train_v, train_r, train_e, train_omega, feature_scaler = normalize_features(
+        train_u, train_v, train_r, train_e, feature_scaler = normalize_features(
             u[:train_end],
             v[:train_end],
             rho[:train_end],
-            energy[:train_end],
-            omega[:train_end])
+            energy[:train_end])
 
     with h5py.File(train_path, 'w') as dest:
         dest['alpha'] = norm_alphas[:train_end]
@@ -234,14 +229,12 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['v'] = train_v
         dest['rho'] = train_r
         dest['energy'] = train_e
-        dest['omega'] = train_omega
 
-    test_u, test_v, test_r, test_e, test_omega, _ = normalize_features(
+    test_u, test_v, test_r, test_e, _ = normalize_features(
         u[train_end:],
         v[train_end:],
         rho[train_end:],
         energy[train_end:],
-        omega[train_end:],
         scaler=feature_scaler)
 
     with h5py.File(test_path, 'w') as dest:
@@ -253,7 +246,6 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['v'] = test_v
         dest['rho'] = test_r
         dest['energy'] = test_e
-        dest['omega'] = test_omega
 
     save_scaler(alpha_scaler, os.path.join(dest_path, 'alpha_scaler.pkl'))
     save_scaler(grid_scaler, os.path.join(dest_path, 'grid_scaler.pkl'))
