@@ -97,8 +97,7 @@ def main():
     airfoil_mask = get_mask(landmark, (data.grid_x, data.grid_y)).flatten()
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).to(device).unsqueeze(0)
 
-    in_size = data.landmarks[0].shape[0] * 2
-    model = Model(len(grid_x), in_size)
+    model = Model()
     model.load_state_dict(torch.load('models/linear.pt'))
     model = model.to(device)
     model.eval()
