@@ -154,17 +154,6 @@ def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> 
     return [u_norm, v_norm] + norm_feature_mat.T.reshape(num_features, -1, feature_len).tolist() + [feat_scaler]
 
 
-def normalize_alpha(alpha, scaler=None) -> tuple:
-    a = np.array(alpha).reshape(-1, 1)
-    if scaler is None:
-        scaler = MinMaxScaler().fit(a)
-    return scaler.transform(a).flatten(), scaler
-
-
-def denormalize_alpha(alpha, scaler) -> np.ndarray:
-    return scaler.inverse_transform(alpha)
-
-
 def save_scaler(scaler, path: str):
     pickle.dump(scaler, open(path, 'wb'))
 
@@ -207,7 +196,6 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
                 masks[i] = m.flatten()
 
         alphas = [int(a) for _, a in enumerate(alphas)]
-        norm_alphas, alpha_scaler = normalize_alpha(alphas)
 
         grid_x, grid_y = grid_x.flatten(), grid_y.flatten()
         norm_grid_x, norm_grid_y, grid_scaler = normalize_grid(grid_x, grid_y)
@@ -221,7 +209,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
             energy[:train_end])
 
     with h5py.File(train_path, 'w') as dest:
-        dest['alpha'] = norm_alphas[:train_end]
+        dest['alpha'] = alphas[:train_end]
         dest['landmarks'] = norm_landmarks[:train_end]
         dest['masks'] = masks[:train_end]
         dest['grid'] = np.array([norm_grid_x, norm_grid_y])
@@ -238,7 +226,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         scaler=feature_scaler)
 
     with h5py.File(test_path, 'w') as dest:
-        dest['alpha'] = norm_alphas[train_end:]
+        dest['alpha'] = alphas[train_end:]
         dest['masks'] = masks[train_end:]
         dest['landmarks'] = norm_landmarks[train_end:]
         dest['grid'] = np.array([norm_grid_x, norm_grid_y])
@@ -247,7 +235,6 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['rho'] = test_r
         dest['energy'] = test_e
 
-    save_scaler(alpha_scaler, os.path.join(dest_path, 'alpha_scaler.pkl'))
     save_scaler(grid_scaler, os.path.join(dest_path, 'grid_scaler.pkl'))
     save_scaler(feature_scaler, os.path.join(dest_path, 'features_scaler.pkl'))
 
