@@ -104,14 +104,13 @@ def main():
     g_x, g_y = generate_free_flow_grids(alpha, data.grid_shape)
     g_x, g_y = g_x.to(device), g_y.to(device)
 
-    pred_u, pred_v, pred_rho = model.forward(alpha, g_x, g_y, landmark.flatten(start_dim=1))
-    pred_u, pred_v, pred_rho = pred_u.numpy(force=True), pred_v.numpy(force=True), pred_rho.numpy(force=True)
-    pred_u, pred_v, pred_rho, _, _ = denormalize_features(pred_u,
-                                                          pred_v,
-                                                          pred_rho,
-                                                          np.ones_like(pred_rho),
-                                                          np.ones_like(pred_rho),
-                                                          scaler=features_scaler)
+    y = model.forward(g_x, g_y, landmark.flatten(start_dim=1), airfoil_mask)
+    pred_u, pred_v, pred_rho, pred_energy = np.reshape(y.numpy(force=True), (4, 1, 128, 128))
+    pred_u, pred_v, pred_rho, pred_energy = denormalize_features([pred_u.flatten()],
+                                                                 [pred_v.flatten()],
+                                                                 [pred_rho.flatten()],
+                                                                 [pred_energy.flatten()],
+                                                                 scaler=features_scaler)
 
     plot_airfoil(alpha.numpy(force=True)[0][0],
                  landmark.numpy(force=True)[0],
