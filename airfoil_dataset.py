@@ -28,11 +28,11 @@ class AirfoilDataset(Dataset):
 
     def __getitem__(self, item):
         landmark = torch.tensor(self.landmarks[item], dtype=torch.float32)
-        mask = torch.tensor(self.masks[item], dtype=torch.float32)
-        u = torch.tensor(self.u[item], dtype=torch.float32)
-        v = torch.tensor(self.v[item], dtype=torch.float32)
-        r = torch.tensor(self.r[item], dtype=torch.float32)
-        e = torch.tensor(self.e[item], dtype=torch.float32)
+        mask = torch.tensor(self.masks[item], dtype=torch.float32).reshape(self.grid_shape)
+        u = torch.tensor(self.u[item], dtype=torch.float32).reshape(self.grid_shape)
+        v = torch.tensor(self.v[item], dtype=torch.float32).reshape(self.grid_shape)
+        r = torch.tensor(self.r[item], dtype=torch.float32).reshape(self.grid_shape)
+        e = torch.tensor(self.e[item], dtype=torch.float32).reshape(self.grid_shape)
         grid_x, grid_y = self.get_free_flow_grid(self.alphas[item])
 
         return grid_x, grid_y, landmark, u, v, r, e, mask
