@@ -33,6 +33,7 @@ def train_model(save_path: str):
     in_size = train_data.landmarks[0].shape[0] * 2
     model = Model(len(train_data.grid_x), in_size)
     model = model.to(device)
+    model.train()
 
     epochs = 40
     optimizer = AdamW(model.parameters(), lr=0.000001)
@@ -81,6 +82,7 @@ def evaluate_model(model_path: str):
     model = Model(len(test_data.grid_x), in_size)
     model.load_state_dict(torch.load(model_path))
     model = model.to(device)
+    model.eval()
 
     loss = MSELoss()
     losses = []
