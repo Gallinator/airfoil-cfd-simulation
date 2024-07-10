@@ -57,9 +57,7 @@ def train_model(save_path: str):
             mask = mask.to(device)
             label = torch.stack((u, v, rho, energy), 1)
 
-            batch_size = landmarks.size()[0]
-            grid_x = torch.tensor(train_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
-            grid_y = torch.tensor(train_data.grid_y, dtype=torch.float32).to(device).repeat(batch_size, 1)
+            y = model.forward(grid_x, grid_y, landmarks, mask)
 
             pred_u, pred_v, pred_rho = model.forward(alpha, grid_x, grid_y, landmarks)
 
@@ -92,7 +90,6 @@ def evaluate_model(model_path: str):
     for batch in test_loader:
         grid_x, grid_y, landmarks, u, v, rho, energy, mask = batch
         landmarks = landmarks.flatten(start_dim=1).to(device)
-        alpha = alpha.to(device)
         u = u.to(device)
         v = v.to(device)
         rho = rho.to(device)
@@ -102,9 +99,7 @@ def evaluate_model(model_path: str):
         grid_y = grid_y.to(device)
         label = torch.stack((u, v, rho, energy), 1)
 
-        batch_size = landmarks.size()[0]
-        grid_x = torch.tensor(test_data.grid_x, dtype=torch.float32).to(device).repeat(batch_size, 1)
-        grid_y = torch.tensor(test_data.grid_y, dtype=torch.float32).to(device).repeat(batch_size, 1)
+        y = model.forward(grid_x, grid_y, landmarks, mask)
 
         pred_u, pred_v, pred_rho = model.forward(alpha, grid_x, grid_y, landmarks)
 
