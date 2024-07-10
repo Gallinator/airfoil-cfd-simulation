@@ -30,8 +30,7 @@ def train_model(save_path: str):
     train_data = AirfoilDataset('data/train_airfoils.h5')
     train_loader = DataLoader(train_data, batch_size=16, shuffle=True, num_workers=8)
 
-    in_size = train_data.landmarks[0].shape[0] * 2
-    model = Model(len(train_data.grid_x), in_size)
+    model = Model()
     model = model.to(device)
     model.train()
 
@@ -78,8 +77,7 @@ def evaluate_model(model_path: str):
     test_data = AirfoilDataset('data/test_airfoils.h5')
     test_loader = DataLoader(test_data, batch_size=16, shuffle=True, num_workers=8)
 
-    in_size = test_data.landmarks[0].shape[0] * 2
-    model = Model(len(test_data.grid_x), in_size)
+    model = Model()
     model.load_state_dict(torch.load(model_path))
     model = model.to(device)
     model.eval()
