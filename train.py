@@ -35,7 +35,7 @@ def train_model(save_path: str):
     model.train()
 
     epochs = 40
-    optimizer = AdamW(model.parameters(), lr=0.000001)
+    optimizer = AdamW(model.parameters(), lr=0.0001)
     loss = MSELoss()
 
     loss_tracker = LossTracker('total')
