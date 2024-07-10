@@ -43,28 +43,47 @@ class DecoderBlock(nn.Module):
 
 
 class Model(nn.Module):
-    def __init__(self, grid_size: int, in_size: int, *args, **kwargs):
+    def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.seq = nn.Sequential(
-            # Landmark + grids + alpha
-            nn.Linear(in_size + grid_size * 2 + 1, 2048),
-            nn.Tanh(),
-            nn.Linear(2048, 4096),
-            nn.Tanh(),
-            nn.Linear(4096, 8192),
-            nn.Tanh())
-        self.v = nn.Sequential(
-            nn.Linear(8192, grid_size),
-            nn.Tanh())
-        self.u = nn.Sequential(
-            nn.Linear(8192, grid_size),
-            nn.Tanh())
-        self.p = nn.Sequential(
-            nn.Linear(8192, grid_size),
-            nn.Tanh())
+        self.ds1 = EncoderBlock(3, 64, 4, 2, 1)
+        self.ds2 = EncoderBlock(64, 128, 4, 2, 1)
+        self.ds3 = EncoderBlock(128, 128, 4, 2, 1)
+        self.ds4 = EncoderBlock(128, 256, 4, 2, 1)
+        self.ds5 = EncoderBlock(256, 512, 2, 2)
+        self.ds6 = EncoderBlock(512, 512, 2, 2)
+        self.ds7 = EncoderBlock(512, 512, 2, 2)
 
-    def forward(self, alpha, grid_x, grid_y, landmarks) -> tuple:
-        in_data = torch.cat((alpha, landmarks, grid_x, grid_y), 1)
-        x = self.seq(in_data)
-        return self.v(x), self.u(x), self.p(x)
+        self.us1 = DecoderBlock(512, 512, 1, 1)
+        self.us2 = DecoderBlock(1024, 512, 1, 1)
+        self.us3 = DecoderBlock(1024, 256, 3, 1, 1)
+        self.us4 = DecoderBlock(512, 128, 3, 1, 1)
+        self.us5 = DecoderBlock(256, 128, 3, 1, 1)
+        self.us6 = DecoderBlock(256, 64, 3, 1, 1)
+        self.us7 = DecoderBlock(128, 4, 3, 1, 1)
+
+    def forward(self, grid_x, grid_y, landmarks, mask):
+        x = torch.stack((grid_x, grid_y, mask), 1)
+        x1 = self.ds1(x)
+        x2 = self.ds2(x1)
+        x3 = self.ds3(x2)
+        x4 = self.ds4(x3)
+        x5 = self.ds5(x4)
+        x6 = self.ds6(x5)
+        x7 = self.ds7(x6)
+
+        x = self.us1(x7)
+        x = torch.cat((x, x6), 1)
+        x = self.us2(x)
+        x = torch.cat((x, x5), 1)
+        x = self.us3(x)
+        x = torch.cat((x, x4), 1)
+        x = self.us4(x)
+        x = torch.cat((x, x3), 1)
+        x = self.us5(x)
+        x = torch.cat((x, x2), 1)
+        x = self.us6(x)
+        x = torch.cat((x, x1), 1)
+        x = self.us7(x)
+
+        return x
