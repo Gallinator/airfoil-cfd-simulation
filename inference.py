@@ -101,6 +101,7 @@ def main():
     model = Model(len(grid_x), in_size)
     model.load_state_dict(torch.load('models/linear.pt'))
     model = model.to(device)
+    model.eval()
 
     landmark = torch.tensor(landmark, dtype=torch.float32)
     landmark = landmark.unsqueeze(0).to(device)
