@@ -94,7 +94,7 @@ def main():
     grid_x = torch.tensor(data.grid_x, dtype=torch.float32).to(device)
     grid_y = torch.tensor(data.grid_y, dtype=torch.float32).to(device)
     landmark = normalize_landmarks(landmark, grid_scaler)
-    airfoil_mask = get_mask(landmark, (data.grid_x, data.grid_y)).flatten()
+    airfoil_mask = get_mask(landmark, (data.grid_coords_x, data.grid_coords_y)).reshape(data.grid_shape)
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).to(device).unsqueeze(0)
 
     model = Model()
