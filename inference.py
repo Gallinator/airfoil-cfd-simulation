@@ -91,7 +91,7 @@ def main():
     # Needed only to load the grids
     data = AirfoilDataset('data/test_airfoils.h5')
     landmark = normalize_landmarks(landmark, grid_scaler)
-    airfoil_mask = get_mask(landmark, (data.grid_coords_x, data.grid_coords_y)).reshape(data.grid_shape)
+    airfoil_mask = get_mask(landmark, (data.grid_coords_x, data.grid_coords_y))
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).to(device).unsqueeze(0)
 
     model = Model()
@@ -105,12 +105,9 @@ def main():
     g_x, g_y = g_x.to(device), g_y.to(device)
 
     y = model.forward(g_x, g_y, landmark.flatten(start_dim=1), airfoil_mask)
-    pred_u, pred_v, pred_rho, pred_energy = np.reshape(y.numpy(force=True), (4, 1, 128, 128))
-    pred_u, pred_v, pred_rho, pred_energy = denormalize_features([pred_u.flatten()],
-                                                                 [pred_v.flatten()],
-                                                                 [pred_rho.flatten()],
-                                                                 [pred_energy.flatten()],
-                                                                 scaler=features_scaler)
+    pred_u, pred_v, pred_rho, pred_energy = np.reshape(y.numpy(force=True), ((4, 1) + data.grid_shape))
+    pred_u, pred_v, pred_rho, pred_energy = denormalize_features([pred_u], [pred_v],
+                                                                 [pred_rho], [pred_energy], scaler=features_scaler)
 
     plot_airfoil(alpha,
                  landmark.numpy(force=True)[0],
