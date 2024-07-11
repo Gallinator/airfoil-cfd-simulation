@@ -46,18 +46,17 @@ def denormalize_landmarks(landmarks: np.ndarray, scaler) -> np.ndarray:
 
 
 def denormalize_features(u, v, *features, scaler) -> np.ndarray:
-    num_features = len(features)
-    feature_len = len(features[0][0])
-    feature_mat = np.array(features).reshape(num_features, -1).T
+    features_shape = np.asarray(features).shape
+    feature_mat = np.array(features).reshape(features_shape[0], -1).T
     u_flat, v_flat = np.array(u).flatten(), np.array(v).flatten()
     vel = np.sqrt(np.square(u_flat) + np.square(v_flat)).reshape(-1, 1)
 
     feature_mat = np.concatenate((feature_mat, vel), axis=1)
 
     denorm_feature_mat = scaler.inverse_transform(feature_mat)
-    u_denorm = (u_flat / scaler.scale_[-1]).reshape(-1, feature_len)
-    v_denorm = (v_flat / scaler.scale_[-1]).reshape(-1, feature_len)
-    denorm_features = denorm_feature_mat[:, :-1].T.reshape(num_features, -1, feature_len)
+    u_denorm = (u_flat / scaler.scale_[-1]).reshape(-1, features_shape[2], features_shape[3])
+    v_denorm = (v_flat / scaler.scale_[-1]).reshape(-1, features_shape[2], features_shape[3])
+    denorm_features = denorm_feature_mat[:, :-1].T.reshape(features_shape)
 
     return np.append([u_denorm, v_denorm], denorm_features, axis=0)
 
@@ -66,7 +65,7 @@ def denormalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler) -> tuple:
     grid_mat = np.concatenate((grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)), axis=1)
     denorm_grid_mat = scaler.inverse_transform(grid_mat)
     denorm_grid_x, denorm_grid_y = np.hsplit(denorm_grid_mat, 2)
-    return denorm_grid_x.flatten(), denorm_grid_y.flatten()
+    return denorm_grid_x.reshape(grid_x.shape), denorm_grid_y.reshape(grid_y.shape)
 
 
 def get_mask(airfoil_poly: np.ndarray, grid: tuple):
@@ -125,7 +124,7 @@ def normalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler=None) -> tuple
         scaler = MinMaxScaler().fit(grid_mat)
     norm_grid_mat = scaler.transform(grid_mat)
     norm_grid_x, norm_grid_y = np.hsplit(norm_grid_mat, 2)
-    return norm_grid_x.flatten(), norm_grid_y.flatten(), scaler
+    return norm_grid_x.reshape(grid_x.shape), norm_grid_y.reshape(grid_y.shape), scaler
 
 
 def normalize_landmarks(landmarks: np.ndarray, grid_scaler):
@@ -135,12 +134,11 @@ def normalize_landmarks(landmarks: np.ndarray, grid_scaler):
 
 
 def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> list:
-    num_features = len(features)
-    feature_len = len(features[0][0])
+    features_shape = np.asarray(features).shape
     u_flat = np.array(u).flatten()
     v_flat = np.array(v).flatten()
     vel = np.sqrt(np.square(u_flat) + np.square(v_flat)).reshape(-1, 1)
-    feature_mat = np.array(features).reshape(num_features, -1).T
+    feature_mat = np.array(features).reshape(features_shape[0], -1).T
     feature_mat = np.concatenate((feature_mat, vel), axis=1)
 
     feat_scaler = scaler
@@ -148,10 +146,10 @@ def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> 
         feat_scaler = MinMaxScaler().fit(feature_mat)
     norm_feature_mat = feat_scaler.transform(feature_mat)
 
-    u_norm = (u_flat * feat_scaler.scale_[-1]).reshape(-1, feature_len)
-    v_norm = (v_flat * feat_scaler.scale_[-1]).reshape(-1, feature_len)
+    u_norm = (u_flat * feat_scaler.scale_[-1]).reshape(-1, features_shape[2], features_shape[3])
+    v_norm = (v_flat * feat_scaler.scale_[-1]).reshape(-1, features_shape[2], features_shape[3])
     norm_feature_mat = norm_feature_mat[:, :-1]
-    return [u_norm, v_norm] + norm_feature_mat.T.reshape(num_features, -1, feature_len).tolist() + [feat_scaler]
+    return [u_norm, v_norm] + norm_feature_mat.T.reshape(features_shape).tolist() + [feat_scaler]
 
 
 def save_scaler(scaler, path: str):
@@ -188,16 +186,14 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
             flow_fields = get_flow_fields(source, indices.tolist(), alphas)
             args = [(i, landmarks[i], (grid_x, grid_y), ff[1]) for i, ff in enumerate(flow_fields)]
             for i, r_u, r_v, r, e, m in pool.starmap(airfoil_sampling_task, args):
-                r_flat = r.flatten()
-                u[i] = np.divide(r_u.flatten(), r_flat, np.zeros_like(r_flat), where=r_flat != 0)
-                v[i] = np.divide(r_v.flatten(), r_flat, np.zeros_like(r_flat), where=r_flat != 0)
-                rho[i] = r_flat
-                energy[i] = e.flatten()
-                masks[i] = m.flatten()
+                u[i] = np.divide(r_u, r, np.zeros_like(r), where=r != 0)
+                v[i] = np.divide(r_v, r, np.zeros_like(r), where=r != 0)
+                rho[i] = r
+                energy[i] = e
+                masks[i] = m
 
         alphas = [int(a) for _, a in enumerate(alphas)]
 
-        grid_x, grid_y = grid_x.flatten(), grid_y.flatten()
         norm_grid_x, norm_grid_y, grid_scaler = normalize_grid(grid_x, grid_y)
 
         norm_landmarks = normalize_landmarks(landmarks, grid_scaler)
