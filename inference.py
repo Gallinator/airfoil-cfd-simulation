@@ -109,15 +109,8 @@ def main():
     pred_u, pred_v, pred_rho, pred_energy = denormalize_features([pred_u], [pred_v],
                                                                  [pred_rho], [pred_energy], scaler=features_scaler)
 
-    plot_airfoil(alpha,
-                 landmark.numpy(force=True)[0],
-                 airfoil_mask.numpy(force=True)[0].flatten(),
-                 data.grid_coords_x,
-                 data.grid_coords_y,
-                 pred_u[0].flatten(),
-                 pred_v[0].flatten(),
-                 pred_rho[0].flatten(),
-                 pred_energy[0].flatten())
+    plot_airfoil(alpha, landmark.numpy(force=True)[0], airfoil_mask.numpy(force=True)[0],
+                 data.grid_coords_x, data.grid_coords_y, pred_u[0], pred_v[0], pred_rho[0], pred_energy[0])
 
 
 if __name__ == '__main__':
