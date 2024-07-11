@@ -30,50 +30,48 @@ def plot_airfoil(alpha, landmarks: np.ndarray,
                  grid_y: np.ndarray,
                  u: np.ndarray,
                  v: np.ndarray,
-                 rho: np.ndarray):
-    color = np.sqrt(np.square(v) + np.square(u))
+                 rho: np.ndarray,
+                 energy: np.ndarray):
     grid_edge_size = int(math.sqrt(len(grid_x)))
     airfoil_mask = mask != 1.0
 
-    fig, axs = plt.subplots(1, 3, figsize=(36, 12), layout='constrained')
+    fig = plt.figure(figsize=(36, 12), layout='constrained')
     fig.suptitle(f'Airflow simulation, AoA={int(alpha)}', fontsize=16)
 
-    ax_v, ax_rho, ax_stream = axs
+    ax_v, ax_r, ax_e = fig.subplots(1, 3)
+
     ax_v.set_title(f"Flow velocity")
-    ax_v.fill(landmarks[:, 0], landmarks[:, 1], color='grey')
-    v_plot = ax_v.quiver(grid_x[airfoil_mask],
-                         grid_y[airfoil_mask],
-                         u[airfoil_mask],
-                         v[airfoil_mask],
-                         color[airfoil_mask],
-                         scale_units='xy',
-                         units='xy',
-                         scale=6,
-                         headwidth=2,
-                         headlength=4,
-                         headaxislength=4,
-                         width=0.002,
-                         cmap='jet')
+    velocity = np.sqrt(np.square(v) + np.square(u))
+    ax_v.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
+    v_plot = ax_v.scatter(grid_x[airfoil_mask], grid_y[airfoil_mask], c=velocity[airfoil_mask], s=3)
     fig.colorbar(v_plot, ax=ax_v)
     ax_v.set_aspect('equal')
 
-    ax_rho.set_title(f"Flow density")
-    ax_rho.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
-    rho_plot = ax_rho.scatter(grid_x[airfoil_mask],
-                              grid_y[airfoil_mask],
-                              c=rho[airfoil_mask],
-                              s=5)
-    fig.colorbar(rho_plot, ax=ax_rho)
-    ax_rho.set_aspect('equal')
+    ax_r.set_title(f"Flow density")
+    ax_r.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
+    r_plot = ax_r.scatter(grid_x[airfoil_mask], grid_y[airfoil_mask], c=rho[airfoil_mask], s=3)
+    fig.colorbar(r_plot, ax=ax_r)
+    ax_r.set_aspect('equal')
 
+    ax_e.set_title(f"Flow energy")
+    ax_e.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
+    e_plot = ax_e.scatter(grid_x[airfoil_mask], grid_y[airfoil_mask], c=energy[airfoil_mask], s=3)
+    fig.colorbar(e_plot, ax=ax_e)
+    ax_e.set_aspect('equal')
+    plt.ion()
+    plt.show()
+
+    fig = plt.figure(figsize=(18, 18), layout='constrained')
+    ax_stream = fig.subplots(1, 1)
     ax_stream.set_title(f"Airflow")
     ax_stream.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
     ax_stream.streamplot(grid_x.reshape(grid_edge_size, -1).T,
                          grid_y.reshape(grid_edge_size, -1).T,
                          u.reshape(grid_edge_size, -1).T,
                          v.reshape(grid_edge_size, -1).T,
-                         color=color.reshape(grid_edge_size, -1).T,
-                         broken_streamlines=False, arrowsize=0, density=2, cmap='jet')
+                         color=velocity.reshape(grid_edge_size, -1).T,
+                         broken_streamlines=False, arrowsize=0, density=3, cmap='jet')
     ax_stream.set_aspect('equal')
 
+    plt.ioff()
     plt.show()

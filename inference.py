@@ -112,12 +112,15 @@ def main():
                                                                  [pred_energy.flatten()],
                                                                  scaler=features_scaler)
 
-    plot_airfoil(alpha.numpy(force=True)[0][0],
+    plot_airfoil(alpha,
                  landmark.numpy(force=True)[0],
-                 airfoil_mask.numpy(force=True)[0],
-                 data.grid_x,
-                 data.grid_y,
-                 pred_u[0], pred_v[0], pred_rho[0])
+                 airfoil_mask.numpy(force=True)[0].flatten(),
+                 data.grid_coords_x,
+                 data.grid_coords_y,
+                 pred_u[0].flatten(),
+                 pred_v[0].flatten(),
+                 pred_rho[0].flatten(),
+                 pred_energy[0].flatten())
 
 
 if __name__ == '__main__':
