@@ -92,7 +92,7 @@ def generate_free_flow_grids(alpha, shape):
     return grid_x, grid_y
 
 
-def main():
+def run_inference():
     grid_scaler = load_scaler('data/grid_scaler.pkl')
     features_scaler = load_scaler('data/features_scaler.pkl')
 
@@ -124,4 +124,4 @@ def main():
 
 
 if __name__ == '__main__':
-    main()
+    run_inference()
