@@ -3,6 +3,7 @@ import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 import torch
+from matplotlib.transforms import Affine2D
 from matplotlib.widgets import Slider
 from airfoil_dataset import AirfoilDataset
 from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features, get_mask
@@ -51,27 +52,36 @@ def slope_to_deg(slope):
     return math.degrees(math.atan(slope))
 
 
+def get_axline_transform(ax, alpha):
+    return Affine2D().rotate_deg_around(0.5, 0, 90 + alpha) + ax.transData
+
+
 def edit_custom_airfoil() -> tuple:
     upper_polygon = Polygon(np.array(DEFAULT_BEZIER_NODES), animated=True)
     fig, axs = plt.subplots(2, 1, layout='constrained', height_ratios=[0.95, 0.05])
     airfoil_ax, alpha_ax = axs
-    alpha_line = airfoil_ax.axline((1.0, 0.0), slope=deg_to_slope(DEFAULT_ALPHA), color='blue')
     airfoil_ax.add_patch(upper_polygon)
     airfoil_interactor = AirfoilInteractor(airfoil_ax, upper_polygon)
     airfoil_ax.set_ylim((-0.5, 0.5))
     airfoil_ax.set_xlim((-0.5, 1.5))
+    alpha_lines = []
+    for x in np.linspace(-0.5, 1.5, 20):
+        alpha_lines.append(airfoil_ax.axline((x, 0.0), slope=deg_to_slope(DEFAULT_ALPHA), color='paleturquoise',
+                                             transform=get_axline_transform(airfoil_ax, DEFAULT_ALPHA)))
     airfoil_ax.set_aspect('equal')
 
     alpha_slider = Slider(ax=alpha_ax, label='Angle of attack', valmin=-45, valmax=45, valstep=1, valinit=DEFAULT_ALPHA)
 
     def update_alpha_line(alpha_deg):
-        alpha_line.set_slope(deg_to_slope(alpha_deg))
+        for l in alpha_lines:
+            l.set_slope(deg_to_slope(alpha_deg))
+            l.set_transform(get_axline_transform(airfoil_ax, alpha_deg))
         fig.canvas.draw_idle()
 
     alpha_slider.on_changed(update_alpha_line)
 
     plt.show()
-    return sample_beziers(airfoil_interactor), slope_to_deg(alpha_line.get_slope())
+    return sample_beziers(airfoil_interactor), slope_to_deg(alpha_lines[0].get_slope())
 
 
 def generate_free_flow_grids(alpha, shape):
