@@ -11,21 +11,10 @@ from torch.utils.data import DataLoader
 from airfoil_dataset import AirfoilDataset
 from loss_tracker import LossTracker
 from model import Model
+from utils import get_torch_device
 from visualization import plot_training_history
 
-
-def get_device():
-    train_on_gpu = torch.cuda.is_available()
-
-    if not train_on_gpu:
-        print('CUDA is not available.  Using CPU')
-    else:
-        print('CUDA is available!  Using GPU')
-
-    return torch.device("cuda:0" if train_on_gpu else "cpu")
-
-
-device = get_device()
+device = get_torch_device()
 
 
 def train_model(save_path: str, data_path: str):
