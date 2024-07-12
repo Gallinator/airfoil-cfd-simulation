@@ -73,7 +73,7 @@ def get_mask(airfoil_poly: np.ndarray, grid: tuple):
     grid_x, grid_y = grid
     grid_x, grid_y = grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)
     grid_points = np.concatenate((grid_x, grid_y), axis=1)
-    return airfoil_path.contains_points(grid_points)
+    return airfoil_path.contains_points(grid_points).reshape(grid[0].shape)
 
 
 def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
