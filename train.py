@@ -34,7 +34,7 @@ def train_model(save_path: str):
     model = model.to(device)
     model.train()
 
-    epochs = 40
+    epochs = 120
     optimizer = AdamW(model.parameters(), lr=0.0001)
     loss = MSELoss()
 
