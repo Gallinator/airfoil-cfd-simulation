@@ -246,4 +246,13 @@ def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
 
 
 if __name__ == '__main__':
-    create_sampled_datasets('/media/luigi/Linux/airfoil_9k_data.h5', 'data', 50j, 1000, 0.8)
+    download_dir = input('Data download directory: ')
+    download_data(download_dir)
+    data_dir = input('Datasets save directory: ')
+    num_samples = int(input('Total samples: '))
+    train_size = float(input('Training data proportion [0,1]: '))
+    create_sampled_datasets(os.path.join(download_dir, 'airfoil_9k_data.h5'),
+                            data_dir,
+                            128j,
+                            num_samples,
+                            train_size)
