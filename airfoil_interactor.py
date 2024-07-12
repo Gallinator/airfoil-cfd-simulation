@@ -2,6 +2,7 @@ import bezier.curve
 import numpy as np
 from matplotlib.artist import Artist
 from matplotlib.lines import Line2D
+from matplotlib.patches import Polygon
 
 
 def dist_point_to_segment(p, s0, s1):
@@ -55,19 +56,14 @@ class AirfoilInteractor:
         self.canvas = canvas
 
         self.bezier_sampling_points = np.linspace(0.0, 1.0, 100)
-        bezier_upper_points, bezier_lower_points = (
-            self.get_bezier_points(self.bezier_sampling_points, self.bezier_sampling_points))
-        self.bezier_upper = Line2D(bezier_upper_points[0], bezier_upper_points[1], animated=True)
-        self.bezier_lower = Line2D(bezier_lower_points[0], bezier_lower_points[1], animated=True)
-        self.ax.add_line(self.bezier_upper)
-        self.ax.add_line(self.bezier_lower)
+        self.airfoil_poly = Polygon(self.get_airfoil_poly_xy(), animated=True, facecolor='lightgrey')
+        self.ax.add_patch(self.airfoil_poly)
 
     def on_draw(self, event):
         self.background = self.canvas.copy_from_bbox(self.ax.bbox)
+        self.ax.draw_artist(self.airfoil_poly)
         self.ax.draw_artist(self.poly)
         self.ax.draw_artist(self.line)
-        self.ax.draw_artist(self.bezier_upper)
-        self.ax.draw_artist(self.bezier_lower)
         # do not need to blit here, this will fire before the screen is
         # updated
 
@@ -148,17 +144,17 @@ class AirfoilInteractor:
         self.poly.xy[self._ind] = x, y
         self.line.set_data(zip(*self.poly.xy))
 
-        bezier_upper_points, bezier_lower_points = self.get_bezier_points(self.bezier_sampling_points,
-                                                                          self.bezier_sampling_points)
-        self.bezier_upper.set_data(bezier_upper_points[0], bezier_upper_points[1])
-        self.bezier_lower.set_data(bezier_lower_points[0], bezier_lower_points[1])
+        self.airfoil_poly.set_xy(self.get_airfoil_poly_xy())
 
         self.canvas.restore_region(self.background)
+        self.ax.draw_artist(self.airfoil_poly)
         self.ax.draw_artist(self.poly)
         self.ax.draw_artist(self.line)
-        self.ax.draw_artist(self.bezier_upper)
-        self.ax.draw_artist(self.bezier_lower)
         self.canvas.blit(self.ax.bbox)
+
+    def get_airfoil_poly_xy(self):
+        bezier_points = self.get_bezier_points(self.bezier_sampling_points, self.bezier_sampling_points)
+        return np.concatenate(bezier_points, 1).T
 
     def get_bezier_points(self, sampling_points_upper: np.ndarray, sampling_points_lower: np.ndarray):
         nodes_x, nodes_y = zip(*self.poly.xy)
