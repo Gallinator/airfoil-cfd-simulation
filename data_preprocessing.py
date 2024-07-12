@@ -245,4 +245,5 @@ def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
     return sampled_values
 
 
-create_sampled_datasets('/media/luigi/Linux/airfoil_9k_data.h5', 'data', 50j, 1000, 0.8)
+if __name__ == '__main__':
+    create_sampled_datasets('/media/luigi/Linux/airfoil_9k_data.h5', 'data', 50j, 1000, 0.8)
