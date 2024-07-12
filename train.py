@@ -104,5 +104,6 @@ def evaluate_model(model_path: str):
     print(f'Evaluation MSE: {np.mean(losses)}')
 
 
-train_model('models/linear.pt')
-evaluate_model('models/linear.pt')
+if __name__ == '__main__':
+    train_model('models/linear.pt')
+    evaluate_model('models/linear.pt')
