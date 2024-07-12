@@ -30,7 +30,7 @@ class AirfoilInteractor:
     """
 
     showverts = True
-    epsilon = 5  # max pixel distance to count as a vertex hit
+    epsilon = 10  # max pixel distance to count as a vertex hit
 
     def __init__(self, ax, poly):
         if poly.figure is None:
