@@ -9,22 +9,11 @@ from airfoil_dataset import AirfoilDataset
 from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features, get_mask, denormalize_grid
 from model import Model
 from airfoil_interactor import AirfoilInteractor
+from utils import get_torch_device
 
 from visualization import plot_airfoil
 
-
-def get_device():
-    train_on_gpu = torch.cuda.is_available()
-
-    if not train_on_gpu:
-        print('CUDA is not available.  Using CPU')
-    else:
-        print('CUDA is available!  Using GPU')
-
-    return torch.device("cuda:0" if train_on_gpu else "cpu")
-
-
-device = get_device()
+device = get_torch_device()
 
 DEFAULT_BEZIER_NODES = [[0.0, 0.0],
                         [0.0, 0.1],
