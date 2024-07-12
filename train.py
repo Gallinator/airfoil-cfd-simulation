@@ -1,3 +1,5 @@
+import os.path
+
 import matplotlib.pyplot as plt
 import numpy as np
 import torch
@@ -26,8 +28,8 @@ def get_device():
 device = get_device()
 
 
-def train_model(save_path: str):
-    train_data = AirfoilDataset('data/train_airfoils.h5')
+def train_model(save_path: str, data_path: str):
+    train_data = AirfoilDataset(os.path.join(data_path, 'train_airfoils.h5'))
     train_loader = DataLoader(train_data, batch_size=16, shuffle=True, num_workers=8)
 
     model = Model()
@@ -66,19 +68,18 @@ def train_model(save_path: str):
             loss_tracker.batch_update(total=batch_loss.item())
 
         loss_tracker.epoch_update()
-        prog.write(f'Epoch {e} loss: {loss_tracker.loss_history['total'][-1]}')
-        torch.save(model.state_dict(), save_path)
+    torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
 
     plot_training_history(loss_tracker)
     plt.show()
 
 
-def evaluate_model(model_path: str):
-    test_data = AirfoilDataset('data/test_airfoils.h5')
+def evaluate_model(model_path: str, data_path: str):
+    test_data = AirfoilDataset(os.path.join(data_path, 'test_airfoils.h5'))
     test_loader = DataLoader(test_data, batch_size=16, shuffle=True, num_workers=8)
 
     model = Model()
-    model.load_state_dict(torch.load(model_path))
+    model.load_state_dict(torch.load(os.path.join(model_path, 'model.pt')))
     model = model.to(device)
     model.eval()
 
@@ -105,5 +106,7 @@ def evaluate_model(model_path: str):
 
 
 if __name__ == '__main__':
-    train_model('models/linear.pt')
-    evaluate_model('models/linear.pt')
+    model_dir = input('Model directory: ')
+    data_dir = input('Data directory: ')
+    train_model(model_dir, data_dir)
+    evaluate_model(model_dir, data_dir)
