@@ -58,7 +58,7 @@ def get_axline_transform(ax, alpha):
 
 def edit_custom_airfoil() -> tuple:
     upper_polygon = Polygon(np.array(DEFAULT_BEZIER_NODES), animated=True)
-    fig, axs = plt.subplots(2, 1, layout='constrained', height_ratios=[0.95, 0.05])
+    fig, axs = plt.subplots(2, 1, layout='constrained', height_ratios=[0.95, 0.01])
     airfoil_ax, alpha_ax = axs
     airfoil_ax.add_patch(upper_polygon)
     airfoil_interactor = AirfoilInteractor(airfoil_ax, upper_polygon)
