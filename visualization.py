@@ -32,7 +32,6 @@ def plot_airfoil(alpha, landmarks: np.ndarray,
                  v: np.ndarray,
                  rho: np.ndarray,
                  energy: np.ndarray):
-    grid_edge_size = int(math.sqrt(len(grid_x)))
     airfoil_mask = mask != 1.0
 
     fig = plt.figure(figsize=(36, 12), layout='constrained')
