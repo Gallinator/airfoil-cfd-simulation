@@ -152,6 +152,25 @@ def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> 
     return [u_norm, v_norm] + norm_feature_mat.T.reshape(features_shape).tolist() + [feat_scaler]
 
 
+def normalize_coefficients(*coefs, scaler=None) -> list:
+    num_coefs = len(coefs)
+    coefs_mat = np.vstack(coefs).T
+
+    coefs_scaler = scaler
+    if coefs_scaler is None:
+        coefs_scaler = MinMaxScaler().fit(coefs_mat)
+
+    norm_coefs_mat = coefs_scaler.transform(coefs_mat)
+    return np.array(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1).tolist() + [coefs_scaler]
+
+
+def denormalize_coefficients(*coefs, scaler) -> np.ndarray:
+    num_coefs = len(coefs)
+    coefs_mat = np.vstack(coefs).T
+    norm_coefs_mat = scaler.inverse_transform(coefs_mat)
+    return np.array(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1)
+
+
 def save_scaler(scaler, path: str):
     pickle.dump(scaler, open(path, 'wb'))
 
