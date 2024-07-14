@@ -37,7 +37,7 @@ def train_model(save_path: str, data_path: str):
         for batch in prog:
             optimizer.zero_grad()
 
-            grid_x, grid_y, landmarks, u, v, rho, energy, mask = batch
+            grid_x, grid_y, landmarks, u, v, rho, energy, mask, cd, cl, cm = batch
             landmarks = landmarks.flatten(start_dim=1).to(device)
             grid_x = grid_x.to(device)
             grid_y = grid_y.to(device)
@@ -46,6 +46,7 @@ def train_model(save_path: str, data_path: str):
             rho = rho.to(device)
             energy = energy.to(device)
             mask = mask.to(device)
+            coefs = torch.cat((cl, cd, cm), 1).to(device)
             label = torch.stack((u, v, rho, energy), 1)
 
             y = model.forward(grid_x, grid_y, landmarks, mask)
@@ -76,13 +77,14 @@ def evaluate_model(model_path: str, data_path: str):
     losses = []
 
     for batch in test_loader:
-        grid_x, grid_y, landmarks, u, v, rho, energy, mask = batch
+        grid_x, grid_y, landmarks, u, v, rho, energy, mask, cd, cl, cm = batch
         landmarks = landmarks.flatten(start_dim=1).to(device)
         u = u.to(device)
         v = v.to(device)
         rho = rho.to(device)
         energy = energy.to(device)
         mask = mask.to(device)
+        coefs = torch.cat((cl, cd, cm), 1).to(device)
         grid_x = grid_x.to(device)
         grid_y = grid_y.to(device)
         label = torch.stack((u, v, rho, energy), 1)

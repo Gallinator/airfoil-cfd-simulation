@@ -16,6 +16,9 @@ class AirfoilDataset(Dataset):
         self.v = self.file['v']
         self.r = self.file['rho']
         self.e = self.file['energy']
+        self.cd = self.file['C_d']
+        self.cl = self.file['C_l']
+        self.cm = self.file['C_m']
         self.grid_coords_x, self.grid_coords_y = self.file['grid'][()]
         self.grid_shape = self.grid_coords_y.shape
 
@@ -33,9 +36,12 @@ class AirfoilDataset(Dataset):
         v = torch.tensor(self.v[item], dtype=torch.float32)
         r = torch.tensor(self.r[item], dtype=torch.float32)
         e = torch.tensor(self.e[item], dtype=torch.float32)
+        cd = torch.tensor([self.cd[item]], dtype=torch.float32)
+        cl = torch.tensor([self.cl[item]], dtype=torch.float32)
+        cm = torch.tensor([self.cm[item]], dtype=torch.float32)
         grid_x, grid_y = self.get_free_flow_grid(self.alphas[item])
 
-        return grid_x, grid_y, landmark, u, v, r, e, mask
+        return grid_x, grid_y, landmark, u, v, r, e, mask, cd, cl, cm
 
     def __len__(self):
         return len(self.landmarks)
