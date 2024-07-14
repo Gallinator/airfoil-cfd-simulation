@@ -179,6 +179,21 @@ def load_scaler(path: str):
     return pickle.load(open(path, 'rb'))
 
 
+def extract_coefs(src: File, indices, alphas) -> tuple:
+    cd = np.array([None for _ in range(len(indices))])
+    cl = np.array([None for _ in range(len(indices))])
+    cm = np.array([None for _ in range(len(indices))])
+    alphas_12 = alphas[indices] == 12
+    alphas_04 = alphas[indices] == 4
+    cd[alphas_12] = src[f'alpha+12']['C_d'][()][indices][alphas_12]
+    cd[alphas_04] = src[f'alpha+04']['C_d'][()][indices][alphas_04]
+    cl[alphas_12] = src[f'alpha+12']['C_l'][()][indices][alphas_12]
+    cl[alphas_04] = src[f'alpha+04']['C_l'][()][indices][alphas_04]
+    cm[alphas_12] = src[f'alpha+12']['C_m'][()][indices][alphas_12]
+    cm[alphas_04] = src[f'alpha+04']['C_m'][()][indices][alphas_04]
+    return cd, cl, cm
+
+
 def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int, train_size: float):
     train_path = os.path.join(dest_path, TRAIN_FILE)
     test_path = os.path.join(dest_path, TEST_FILE)
@@ -211,8 +226,11 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
                 energy[i] = e
                 masks[i] = m
 
-        alphas = [int(a) for _, a in enumerate(alphas)]
+        alphas = np.array([int(a) for _, a in enumerate(alphas)])
+        c_d, c_l, c_m = extract_coefs(source, indices, alphas)
 
+        train_cd, train_cl, train_cm, coefs_scaler = normalize_coefficients(
+            c_d[:train_end], c_l[:train_end], c_m[:train_end])
         norm_grid_x, norm_grid_y, grid_scaler = normalize_grid(grid_x, grid_y)
 
         norm_landmarks = normalize_landmarks(landmarks, grid_scaler)
@@ -232,6 +250,9 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['v'] = train_v
         dest['rho'] = train_r
         dest['energy'] = train_e
+        dest['C_d'] = train_cd
+        dest['C_l'] = train_cl
+        dest['C_m'] = train_cm
 
     test_u, test_v, test_r, test_e, _ = normalize_features(
         u[train_end:],
@@ -239,6 +260,8 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         rho[train_end:],
         energy[train_end:],
         scaler=feature_scaler)
+    test_cd, test_cl, test_cm, _ = normalize_coefficients(c_d[train_end:], c_l[train_end:], c_m[train_end:],
+                                                          scaler=coefs_scaler)
 
     with h5py.File(test_path, 'w') as dest:
         dest['alpha'] = alphas[train_end:]
@@ -249,9 +272,13 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['v'] = test_v
         dest['rho'] = test_r
         dest['energy'] = test_e
+        dest['C_d'] = test_cd
+        dest['C_l'] = test_cl
+        dest['C_m'] = test_cm
 
     save_scaler(grid_scaler, os.path.join(dest_path, 'grid_scaler.pkl'))
     save_scaler(feature_scaler, os.path.join(dest_path, 'features_scaler.pkl'))
+    save_scaler(coefs_scaler, os.path.join(dest_path, 'coefs_scaler.pkl'))
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
