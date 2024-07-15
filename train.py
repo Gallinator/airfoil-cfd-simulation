@@ -29,7 +29,7 @@ def train_model(save_path: str, data_path: str):
     optimizer = AdamW(model.parameters(), lr=0.0001)
     loss = MSELoss()
 
-    loss_tracker = LossTracker('Total')
+    loss_tracker = LossTracker('Total', 'Coefficients', 'Flow')
 
     for e in range(epochs):
 
@@ -49,16 +49,22 @@ def train_model(save_path: str, data_path: str):
             coefs = torch.cat((cl, cd, cm), 1).to(device)
             label = torch.stack((u, v, rho, energy), 1)
 
-            y = model.forward(grid_x, grid_y, landmarks, mask)
+            pred_flow, pred_coefs = model.forward(grid_x, grid_y, landmarks, mask)
 
-            batch_loss = loss(label, y)
+            coefs_loss = loss(coefs, pred_coefs)
+            air_loss = loss(label, pred_flow)
+
+            batch_loss = air_loss + coefs_loss
             batch_loss.backward()
             optimizer.step()
 
-            loss_tracker.batch_update(Total=batch_loss.item())
+            loss_tracker.batch_update(Total=batch_loss.item(), Coefficients=coefs_loss.item(), Flow=air_loss.item())
 
         loss_tracker.epoch_update()
-    torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
+        prog.write(f'Epoch {e} flow loss: {loss_tracker.loss_history['Flow'][-1]}')
+        prog.write(f'Epoch {e} total loss: {loss_tracker.loss_history['Total'][-1]}')
+        prog.write(f'Epoch {e} coefs loss: {loss_tracker.loss_history['Coefficients'][-1]}')
+        torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
 
     plot_training_history(loss_tracker)
     plt.show()
@@ -89,9 +95,10 @@ def evaluate_model(model_path: str, data_path: str):
         grid_y = grid_y.to(device)
         label = torch.stack((u, v, rho, energy), 1)
 
-        pred_flow, _ = model.forward(grid_x, grid_y, landmarks, mask)
+        pred_flow, pred_coefs = model.forward(grid_x, grid_y, landmarks, mask)
 
-        losses.append(loss(y, label).item())
+        losses.append(loss(pred_flow, label).item())
+        losses.append(loss(pred_coefs, coefs).item())
 
     print(f'Evaluation MSE: {np.mean(losses)}')
 
