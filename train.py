@@ -89,7 +89,7 @@ def evaluate_model(model_path: str, data_path: str):
         grid_y = grid_y.to(device)
         label = torch.stack((u, v, rho, energy), 1)
 
-        y = model.forward(grid_x, grid_y, landmarks, mask)
+        pred_flow, _ = model.forward(grid_x, grid_y, landmarks, mask)
 
         losses.append(loss(y, label).item())
 

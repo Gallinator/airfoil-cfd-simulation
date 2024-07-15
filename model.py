@@ -62,6 +62,16 @@ class Model(nn.Module):
         self.us6 = DecoderBlock(256, 64, 3, 1, 1)
         self.us7 = DecoderBlock(128, 4, 3, 1, 1)
 
+        self.coefs_linear = nn.Sequential(
+            nn.Linear(512, 128),
+            nn.LeakyReLU(),
+            nn.Dropout(0.01),
+            nn.Linear(128, 32),
+            nn.LeakyReLU(),
+            nn.Dropout(0.01),
+            nn.Linear(32, 3),
+            nn.LeakyReLU())
+
     def forward(self, grid_x, grid_y, landmarks, mask):
         x = torch.stack((grid_x, grid_y, mask), 1)
         x1 = self.ds1(x)
@@ -86,4 +96,5 @@ class Model(nn.Module):
         x = torch.cat((x, x1), 1)
         x = self.us7(x)
 
-        return x
+        coefs = self.coefs_linear(torch.flatten(x7, 1))
+        return x, coefs

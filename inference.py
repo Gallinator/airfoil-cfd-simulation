@@ -102,7 +102,7 @@ def run_inference():
     flow_x, flow_y = generate_free_flow_grids(alpha, data.grid_shape)
     flow_x, flow_y = flow_x.to(device), flow_y.to(device)
 
-    y = model.forward(flow_x, flow_y, norm_landmark.flatten(start_dim=1), airfoil_mask)
+    y, _ = model.forward(flow_x, flow_y, norm_landmark.flatten(start_dim=1), airfoil_mask)
     pred_u, pred_v, pred_rho, pred_energy = np.reshape(y.numpy(force=True), ((4, 1) + data.grid_shape))
     pred_u, pred_v, pred_rho, pred_energy = denormalize_features(pred_u, pred_v,
                                                                  pred_rho, pred_energy, scaler=features_scaler)
