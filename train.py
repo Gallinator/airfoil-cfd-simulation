@@ -33,7 +33,7 @@ def train_model(save_path: str, data_path: str):
 
     for e in range(epochs):
 
-        prog = tqdm.tqdm(train_loader, desc=f'Epoch {e}')
+        prog = tqdm.tqdm(train_loader, f'Epoch {e}')
         for batch in prog:
             optimizer.zero_grad()
 
