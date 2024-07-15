@@ -89,10 +89,10 @@ def run_inference():
 
     landmark, alpha = edit_custom_airfoil()
 
-    # Needed only to load the grids
-    data = AirfoilDataset('data/test_airfoils.h5')
+    grid_coords_x, grid_coords_y = np.load('data/grid_coords.npy')
+    grid_shape = grid_coords_x.shape
     norm_landmark = normalize_landmarks(landmark, grid_scaler)
-    airfoil_mask = get_mask(norm_landmark, (data.grid_coords_x, data.grid_coords_y))
+    airfoil_mask = get_mask(norm_landmark, (grid_coords_x, grid_coords_y))
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).unsqueeze(0)
 
     model = Model()
@@ -100,14 +100,14 @@ def run_inference():
     model = model.to(device)
     model.eval()
 
-    flow_x, flow_y = generate_free_flow_grids(alpha, data.grid_shape)
+    flow_x, flow_y = generate_free_flow_grids(alpha, grid_shape)
     flow_data = torch.stack((flow_x, flow_y, airfoil_mask), 1).to(device)
 
     pred_flow, pred_coefs = model.forward(flow_data)
-    pred_u, pred_v, pred_rho, pred_energy = np.reshape(pred_flow.numpy(force=True), ((4, 1) + data.grid_shape))
+    pred_u, pred_v, pred_rho, pred_energy = np.reshape(pred_flow.numpy(force=True), ((4, 1) + grid_shape))
     pred_u, pred_v, pred_rho, pred_energy = denormalize_features(pred_u, pred_v,
                                                                  pred_rho, pred_energy, scaler=features_scaler)
-    grid_coords_x, grid_coords_y = denormalize_grid(data.grid_coords_x, data.grid_coords_y, grid_scaler)
+    grid_coords_x, grid_coords_y = denormalize_grid(grid_coords_x, grid_coords_y, grid_scaler)
 
     cd, cl, cm = pred_coefs.flatten().numpy(force=True)
     cd, cl, cm = denormalize_coefficients(cd, cl, cm, scaler=coefs_scaler)
