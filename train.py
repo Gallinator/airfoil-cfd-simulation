@@ -29,7 +29,7 @@ def train_model(save_path: str, data_path: str):
     optimizer = AdamW(model.parameters(), lr=0.0001)
     loss = MSELoss()
 
-    loss_tracker = LossTracker('total')
+    loss_tracker = LossTracker('Total')
 
     for e in range(epochs):
 
@@ -55,7 +55,7 @@ def train_model(save_path: str, data_path: str):
             batch_loss.backward()
             optimizer.step()
 
-            loss_tracker.batch_update(total=batch_loss.item())
+            loss_tracker.batch_update(Total=batch_loss.item())
 
         loss_tracker.epoch_update()
     torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
