@@ -64,6 +64,8 @@ def plot_airfoil(alpha, landmarks: np.ndarray,
     ax_stream = fig.subplots(1, 1)
     ax_stream.set_title(f"Airflow")
     ax_stream.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
+    u[mask == 1] = 0
+    v[mask == 1] = 0
     ax_stream.streamplot(grid_x.T, grid_y.T, u.T, v.T, color=velocity.T,
                          broken_streamlines=False, arrowsize=0, density=3, cmap='jet')
     ax_stream.set_aspect('equal')
