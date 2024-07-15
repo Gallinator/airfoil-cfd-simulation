@@ -103,13 +103,13 @@ def run_inference():
     flow_x, flow_y = generate_free_flow_grids(alpha, data.grid_shape)
     flow_data = torch.stack((flow_x, flow_y, airfoil_mask), 1).to(device)
 
-    flow, coefs = model.forward(flow_x, flow_y, airfoil_mask)
-    pred_u, pred_v, pred_rho, pred_energy = np.reshape(flow.numpy(force=True), ((4, 1) + data.grid_shape))
+    pred_flow, pred_coefs = model.forward(flow_data)
+    pred_u, pred_v, pred_rho, pred_energy = np.reshape(pred_flow.numpy(force=True), ((4, 1) + data.grid_shape))
     pred_u, pred_v, pred_rho, pred_energy = denormalize_features(pred_u, pred_v,
                                                                  pred_rho, pred_energy, scaler=features_scaler)
     grid_coords_x, grid_coords_y = denormalize_grid(data.grid_coords_x, data.grid_coords_y, grid_scaler)
 
-    cd, cl, cm = coefs.flatten().numpy(force=True)
+    cd, cl, cm = pred_coefs.flatten().numpy(force=True)
     cd, cl, cm = denormalize_coefficients(cd, cl, cm, scaler=coefs_scaler)
 
     plot_airfoil(alpha, landmark, airfoil_mask.numpy(force=True)[0],
