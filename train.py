@@ -37,8 +37,7 @@ def train_model(save_path: str, data_path: str):
         for batch in prog:
             optimizer.zero_grad()
 
-            grid_x, grid_y, landmarks, u, v, rho, energy, mask, cd, cl, cm = batch
-            landmarks = landmarks.flatten(start_dim=1).to(device)
+            grid_x, grid_y, _, u, v, rho, energy, mask, cd, cl, cm = batch
             grid_x = grid_x.to(device)
             grid_y = grid_y.to(device)
             u = u.to(device)
@@ -49,7 +48,7 @@ def train_model(save_path: str, data_path: str):
             coefs = torch.cat((cl, cd, cm), 1).to(device)
             label = torch.stack((u, v, rho, energy), 1)
 
-            pred_flow, pred_coefs = model.forward(grid_x, grid_y, landmarks, mask)
+            pred_flow, pred_coefs = model.forward(grid_x, grid_y, mask)
 
             coefs_loss = loss(coefs, pred_coefs)
             air_loss = loss(label, pred_flow)
@@ -83,8 +82,7 @@ def evaluate_model(model_path: str, data_path: str):
     losses = []
 
     for batch in test_loader:
-        grid_x, grid_y, landmarks, u, v, rho, energy, mask, cd, cl, cm = batch
-        landmarks = landmarks.flatten(start_dim=1).to(device)
+        grid_x, grid_y, _, u, v, rho, energy, mask, cd, cl, cm = batch
         u = u.to(device)
         v = v.to(device)
         rho = rho.to(device)
@@ -95,7 +93,7 @@ def evaluate_model(model_path: str, data_path: str):
         grid_y = grid_y.to(device)
         label = torch.stack((u, v, rho, energy), 1)
 
-        pred_flow, pred_coefs = model.forward(grid_x, grid_y, landmarks, mask)
+        pred_flow, pred_coefs = model.forward(grid_x, grid_y, mask)
 
         losses.append(loss(pred_flow, label).item())
         losses.append(loss(pred_coefs, coefs).item())

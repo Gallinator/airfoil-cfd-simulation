@@ -100,11 +100,10 @@ def run_inference():
     model = model.to(device)
     model.eval()
 
-    norm_landmark = torch.tensor(norm_landmark, dtype=torch.float32).unsqueeze(0).to(device)
     flow_x, flow_y = generate_free_flow_grids(alpha, data.grid_shape)
     flow_x, flow_y = flow_x.to(device), flow_y.to(device)
 
-    flow, coefs = model.forward(flow_x, flow_y, norm_landmark.flatten(start_dim=1), airfoil_mask)
+    flow, coefs = model.forward(flow_x, flow_y, airfoil_mask)
     pred_u, pred_v, pred_rho, pred_energy = np.reshape(flow.numpy(force=True), ((4, 1) + data.grid_shape))
     pred_u, pred_v, pred_rho, pred_energy = denormalize_features(pred_u, pred_v,
                                                                  pred_rho, pred_energy, scaler=features_scaler)
