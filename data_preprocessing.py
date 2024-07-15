@@ -279,6 +279,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
     save_scaler(grid_scaler, os.path.join(dest_path, 'grid_scaler.pkl'))
     save_scaler(feature_scaler, os.path.join(dest_path, 'features_scaler.pkl'))
     save_scaler(coefs_scaler, os.path.join(dest_path, 'coefs_scaler.pkl'))
+    np.save(os.path.join(dest_path, 'grid_coords.npy'), np.array([norm_grid_x, norm_grid_y]))
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
