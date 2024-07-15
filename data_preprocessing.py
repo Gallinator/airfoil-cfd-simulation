@@ -6,6 +6,7 @@ import random
 import h5pickle
 import h5py
 import matplotlib.path
+import matplotlib.pyplot as plt
 import numpy as np
 import requests
 import tqdm
@@ -13,8 +14,7 @@ from h5py import File
 from scipy.interpolate import griddata
 from sklearn.preprocessing import MinMaxScaler
 
-from airfoil_dataset import AirfoilDataset
-from visualization import plot_airfoil
+from visualization import plot_raw_data
 
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
 TRAIN_FILE = 'train_airfoils.h5'
@@ -291,9 +291,32 @@ def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
     return sampled_values
 
 
+def show_raw_data_example(file_path: str):
+    with h5py.File(file_path, 'r') as src:
+        i = random.randint(0, len(src['shape']['landmarks']))
+        landmark = src['shape']['landmarks'][i][()]
+        alpha = random.choice(['04', '12'])
+        ff = src[f'alpha+{alpha}']['flow_field'][str(i).rjust(4, '0')]
+        grid_x, grid_y = ff['x'][()], ff['y'][()]
+        limits = (grid_x <= 1.5) & (grid_x >= -0.5) & (grid_y >= -1) & (grid_y <= 1)
+        grid_x, grid_y = grid_x[limits], grid_y[limits]
+        rho_u = ff['rho_u'][()][limits]
+        rho_v = ff['rho_v'][()][limits]
+        rho = ff['rho'][()][limits]
+        energy = ff['e'][()][limits]
+        omega = ff['omega'][()][limits]
+        cl = src[f'alpha+{alpha}']['C_l'][i]
+        cd = src[f'alpha+{alpha}']['C_d'][i]
+        cm = src[f'alpha+{alpha}']['C_m'][i]
+    plot_raw_data(alpha, grid_x, grid_y, landmark, rho_u, rho_v, rho, energy, omega, cl, cd, cm)
+    plt.show()
+
+
 if __name__ == '__main__':
     download_dir = input('Data download directory: ')
     download_data(download_dir)
+    show_raw_data_example(os.path.join(download_dir, 'airfoil_9k_data.h5'))
+
     data_dir = input('Datasets save directory: ')
     num_samples = int(input('Total samples: '))
     train_size = float(input('Training data proportion [0,1]: '))
