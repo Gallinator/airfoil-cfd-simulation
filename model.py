@@ -82,6 +82,25 @@ class Model(nn.Module):
             nn.Linear(32, 3),
             nn.LeakyReLU())
 
+    def flow_parameters(self):
+        return (list(self.ds1.parameters()) +
+                list(self.ds2.parameters()) +
+                list(self.ds3.parameters()) +
+                list(self.ds4.parameters()) +
+                list(self.ds5.parameters()) +
+                list(self.ds6.parameters()) +
+                list(self.ds7.parameters()) +
+                list(self.us1.parameters()) +
+                list(self.us2.parameters()) +
+                list(self.us3.parameters()) +
+                list(self.us4.parameters()) +
+                list(self.us5.parameters()) +
+                list(self.us6.parameters()) +
+                list(self.us7.parameters()))
+
+    def coef_parameters(self):
+        return list(self.coefs_encoder.parameters()) + list(self.coefs_linear.parameters())
+
     def forward(self, data):
         x1 = self.ds1(data)
         x2 = self.ds2(x1)
