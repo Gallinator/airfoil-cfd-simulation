@@ -18,3 +18,12 @@ The ``` data ``` folder contains the following files:
 - ``` train_sirfoils.h5 ```: normalized training set
 
 ## Inference example
+
+### Airfoil editor
+![Farmers Market Finder - Animated gif demo](docs/Demo_Editing.gif)
+
+### Airflow streamlines
+![alt text](docs/Demo_Airflow.png)
+
+### Airflow quantities
+![alt text](/docs/Demo_Features.png)
