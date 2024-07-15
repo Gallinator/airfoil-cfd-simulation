@@ -19,7 +19,7 @@ device = get_torch_device()
 
 def train_model(save_path: str, data_path: str):
     train_data = AirfoilDataset(os.path.join(data_path, 'train_airfoils.h5'))
-    train_loader = DataLoader(train_data, batch_size=16, shuffle=True, num_workers=8)
+    train_loader = DataLoader(train_data, batch_size=16, shuffle=True, persistent_workers=True, num_workers=4)
 
     model = Model()
     model = model.to(device)
@@ -93,7 +93,8 @@ def evaluate_model(model_path: str, data_path: str):
     model.eval()
 
     loss = MSELoss()
-    losses = []
+    flow_losses = []
+    coefs_losses = []
 
     for batch in tqdm.tqdm(eval_loader, 'Evaluating model'):
         flow_data, coef_labels, flow_labels = batch
@@ -103,14 +104,18 @@ def evaluate_model(model_path: str, data_path: str):
 
         pred_flow, pred_coefs = model.forward(flow_data)
 
-        losses.append(loss(pred_flow, flow_labels).item())
-        losses.append(loss(pred_coefs, coef_labels).item())
+        flow_losses.append(loss(pred_flow, flow_labels).item())
+        coefs_losses.append(loss(pred_coefs, coef_labels).item())
 
-    print(f'Evaluation MSE: {np.mean(losses)}')
+    flow_mean = np.mean(flow_losses)
+    coefs_mean = np.mean(coefs_losses)
+    print(f'Flow MSE: {flow_mean}')
+    print(f'Coefficients MSE: {coefs_mean}')
+    print(f'Total MSE: {flow_mean + coefs_mean}')
 
 
 if __name__ == '__main__':
     model_dir = input('Model directory: ')
     data_dir = input('Data directory: ')
-    train_model(model_dir, data_dir)
+    # train_model(model_dir, data_dir)
     evaluate_model(model_dir, data_dir)
