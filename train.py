@@ -26,37 +26,57 @@ def train_model(save_path: str, data_path: str):
     model.train()
 
     epochs = 120
-    optimizer = AdamW(model.parameters(), lr=0.0001)
     loss = MSELoss()
 
-    loss_tracker = LossTracker('Total', 'Coefficients', 'Flow')
+    loss_tracker = LossTracker('Total')
 
+    print('Training flow layers')
+    flow_optimizer = AdamW(model.flow_parameters(), lr=0.0001)
+    model.freeze_coefficients(True)
     for e in range(epochs):
-
         prog = tqdm.tqdm(train_loader, f'Epoch {e}')
         for batch in prog:
-            optimizer.zero_grad()
+            flow_optimizer.zero_grad()
+
+            flow_data, _, flow_labels = batch
+            flow_data = flow_data.to(device)
+            flow_labels = flow_labels.to(device)
+
+            pred_flow = model.flow_forward(flow_data)
+
+            batch_loss = loss(flow_labels, pred_flow)
+            batch_loss.backward()
+            flow_optimizer.step()
+
+            loss_tracker.batch_update(Total=batch_loss.item())
+
+        loss_tracker.epoch_update()
+        prog.write(f'Epoch {e} total loss: {loss_tracker.loss_history['Total'][-1]}')
+        torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
+
+    print('Training coefficients layers')
+    coefs_optimizer = AdamW(model.coef_parameters(), lr=0.0001)
+    model.freeze_airflow(True)
+    model.freeze_coefficients(False)
+    for e in range(epochs):
+        prog = tqdm.tqdm(train_loader, f'Epoch {e}')
+        for batch in prog:
+            coefs_optimizer.zero_grad()
 
             flow_data, coef_labels, flow_labels = batch
             flow_data = flow_data.to(device)
             coef_labels = coef_labels.to(device)
-            flow_labels = flow_labels.to(device)
 
-            pred_flow, pred_coefs = model.forward(flow_data)
+            _, pred_coefs = model.forward(flow_data)
 
-            coefs_loss = loss(coef_labels, pred_coefs)
-            air_loss = loss(flow_labels, pred_flow)
-
-            batch_loss = air_loss + coefs_loss * 0.75
+            batch_loss = loss(coef_labels, pred_coefs)
             batch_loss.backward()
-            optimizer.step()
+            coefs_optimizer.step()
 
-            loss_tracker.batch_update(Total=batch_loss.item(), Coefficients=coefs_loss.item(), Flow=air_loss.item())
+            loss_tracker.batch_update(Total=batch_loss.item())
 
         loss_tracker.epoch_update()
-        prog.write(f'Epoch {e} flow loss: {loss_tracker.loss_history['Flow'][-1]}')
         prog.write(f'Epoch {e} total loss: {loss_tracker.loss_history['Total'][-1]}')
-        prog.write(f'Epoch {e} coefs loss: {loss_tracker.loss_history['Coefficients'][-1]}')
         torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
 
     plot_training_history(loss_tracker)
