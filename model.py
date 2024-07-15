@@ -73,7 +73,7 @@ class Model(nn.Module):
         )
 
         self.coefs_linear = nn.Sequential(
-            nn.Linear(512, 128),
+            nn.Linear(256, 128),
             nn.LeakyReLU(),
             nn.Dropout(0.01),
             nn.Linear(128, 32),
@@ -102,6 +102,12 @@ class Model(nn.Module):
         return list(self.coefs_encoder.parameters()) + list(self.coefs_linear.parameters())
 
     def forward(self, data):
+        flow_x = self.flow_forward(data)
+        coefs_data = torch.concatenate((data[:, -1, :, :].unsqueeze(1), flow_x[:, 0:2, :, :]), 1)
+        coefs_x = self.coefs_forward(coefs_data)
+        return flow_x, coefs_x
+
+    def flow_forward(self, data):
         x1 = self.ds1(data)
         x2 = self.ds2(x1)
         x3 = self.ds3(x2)
@@ -123,6 +129,12 @@ class Model(nn.Module):
         x = self.us6(x)
         x = torch.cat((x, x1), 1)
         x = self.us7(x)
+        return x
+
+    def coefs_forward(self, data):
+        x = self.coefs_encoder(data)
+        x = self.coefs_linear(torch.flatten(x, 1))
+        return x
 
         coefs = self.coefs_linear(torch.flatten(x7, 1))
         return x, coefs
