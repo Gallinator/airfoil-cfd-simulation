@@ -1,11 +1,12 @@
 import math
+import os.path
+
 import numpy as np
 from matplotlib import pyplot as plt
 from matplotlib.patches import Polygon
 import torch
 from matplotlib.transforms import Affine2D
 from matplotlib.widgets import Slider
-from airfoil_dataset import AirfoilDataset
 from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features, get_mask, denormalize_grid, \
     denormalize_coefficients
 from model import Model
@@ -82,21 +83,21 @@ def generate_free_flow_grids(alpha, shape):
     return grid_x, grid_y
 
 
-def run_inference():
-    grid_scaler = load_scaler('data/grid_scaler.pkl')
-    features_scaler = load_scaler('data/features_scaler.pkl')
-    coefs_scaler = load_scaler('data/coefs_scaler.pkl')
+def run_inference(data_path: str, model_path: str):
+    grid_scaler = load_scaler(os.path.join(data_path, 'grid_scaler.pkl'))
+    features_scaler = load_scaler(os.path.join(data_path, 'features_scaler.pkl'))
+    coefs_scaler = load_scaler(os.path.join(data_path, 'coefs_scaler.pkl'))
 
     landmark, alpha = edit_custom_airfoil()
 
-    grid_coords_x, grid_coords_y = np.load('data/grid_coords.npy')
+    grid_coords_x, grid_coords_y = np.load(os.path.join(data_path, 'grid_coords.npy'))
     grid_shape = grid_coords_x.shape
     norm_landmark = normalize_landmarks(landmark, grid_scaler)
     airfoil_mask = get_mask(norm_landmark, (grid_coords_x, grid_coords_y))
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).unsqueeze(0)
 
     model = Model()
-    model.load_state_dict(torch.load('models/model.pt'))
+    model.load_state_dict(torch.load(os.path.join(model_path, 'model.pt')))
     model = model.to(device)
     model.eval()
 
@@ -118,4 +119,6 @@ def run_inference():
 
 
 if __name__ == '__main__':
-    run_inference()
+    model_dir = input('Model directory: ')
+    data_dir = input('Data directory: ')
+    run_inference(data_dir, model_dir)
