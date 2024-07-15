@@ -62,6 +62,16 @@ class Model(nn.Module):
         self.us6 = DecoderBlock(256, 64, 3, 1, 1)
         self.us7 = DecoderBlock(128, 4, 3, 1, 1)
 
+        self.coefs_encoder = nn.Sequential(
+            EncoderBlock(3, 32, 4, 2, 1),
+            EncoderBlock(32, 64, 4, 2, 1),
+            EncoderBlock(64, 64, 4, 2, 1),
+            EncoderBlock(64, 128, 4, 2, 1),
+            EncoderBlock(128, 256, 2, 2),
+            EncoderBlock(256, 256, 2, 2),
+            EncoderBlock(256, 256, 2, 2),
+        )
+
         self.coefs_linear = nn.Sequential(
             nn.Linear(512, 128),
             nn.LeakyReLU(),
