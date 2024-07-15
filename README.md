@@ -1,5 +1,6 @@
 # Airfoil CFD with neural networks 
-Simulate the behaviour of airflow around airfoils using neural networks.
+Simulate the behaviour of airflow around airfoils using neural networks.<br>
+Trained on the [Airfoil Computational Fluid Dynamics - 9k shapes, 2 AoA's ](https://catalog.data.gov/dataset/airfoil-computational-fluid-dynamics-9k-shapes-2-aoas) dataset.
 ## How to run
 
 - Install requirements ``` pip install -r requirements.txt ```
