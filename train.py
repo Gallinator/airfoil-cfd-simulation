@@ -64,8 +64,8 @@ def train_model(save_path: str, data_path: str):
 
 
 def evaluate_model(model_path: str, data_path: str):
-    test_data = AirfoilDataset(os.path.join(data_path, 'test_airfoils.h5'))
-    test_loader = DataLoader(test_data, batch_size=16, shuffle=True, num_workers=8)
+    eval_data = AirfoilDataset(os.path.join(data_path, 'test_airfoils.h5'))
+    eval_loader = DataLoader(eval_data, batch_size=16, shuffle=True, num_workers=8)
 
     model = Model()
     model.load_state_dict(torch.load(os.path.join(model_path, 'model.pt')))
@@ -75,7 +75,7 @@ def evaluate_model(model_path: str, data_path: str):
     loss = MSELoss()
     losses = []
 
-    for batch in tqdm.tqdm(test_loader, 'Evaluating model'):
+    for batch in tqdm.tqdm(eval_loader, 'Evaluating model'):
         flow_data, coef_labels, flow_labels = batch
         flow_data = flow_data.to(device)
         coef_labels = coef_labels.to(device)
