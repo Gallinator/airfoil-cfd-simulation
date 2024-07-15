@@ -69,7 +69,7 @@ def plot_airfoil(alpha, landmarks: np.ndarray,
     v[mask == 1] = 0
     ax_stream.streamplot(grid_x.T, grid_y.T, u.T, v.T, color=velocity.T,
                          broken_streamlines=False, arrowsize=0, density=3, cmap='jet')
-    coefs_text = f'Cd = {cd:.3f}\nCl = {cl:.3f}\nCm = {cm:.3f}'
+    coefs_text = f'$C_d$ = {cd:.3f}\n$C_l$ = {cl:.3f}\n$C_m$ = {cm:.3f}'
     box_props = dict(boxstyle='round', alpha=0.9)
     ax_stream.text(0.05, 0.95, coefs_text, transform=ax_stream.transAxes,
                    verticalalignment='top',
