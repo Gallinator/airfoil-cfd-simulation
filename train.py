@@ -75,7 +75,7 @@ def evaluate_model(model_path: str, data_path: str):
     loss = MSELoss()
     losses = []
 
-    for batch in test_loader:
+    for batch in tqdm.tqdm(test_loader, 'Evaluating model'):
         flow_data, coef_labels, flow_labels = batch
         flow_data = flow_data.to(device)
         coef_labels = coef_labels.to(device)
