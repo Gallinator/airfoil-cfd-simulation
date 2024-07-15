@@ -136,5 +136,22 @@ class Model(nn.Module):
         x = self.coefs_linear(torch.flatten(x, 1))
         return x
 
-        coefs = self.coefs_linear(torch.flatten(x7, 1))
-        return x, coefs
+    def freeze_airflow(self, frozen: bool):
+        self.ds1.requires_grad_(not frozen)
+        self.ds2.requires_grad_(not frozen)
+        self.ds3.requires_grad_(not frozen)
+        self.ds4.requires_grad_(not frozen)
+        self.ds5.requires_grad_(not frozen)
+        self.ds6.requires_grad_(not frozen)
+        self.ds7.requires_grad_(not frozen)
+        self.us1.requires_grad_(not frozen)
+        self.us2.requires_grad_(not frozen)
+        self.us3.requires_grad_(not frozen)
+        self.us4.requires_grad_(not frozen)
+        self.us5.requires_grad_(not frozen)
+        self.us6.requires_grad_(not frozen)
+        self.us7.requires_grad_(not frozen)
+
+    def freeze_coefficients(self, frozen: bool):
+        self.coefs_linear.requires_grad_(not frozen)
+        self.coefs_encoder.requires_grad_(not frozen)
