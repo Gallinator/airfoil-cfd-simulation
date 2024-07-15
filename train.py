@@ -117,5 +117,5 @@ def evaluate_model(model_path: str, data_path: str):
 if __name__ == '__main__':
     model_dir = input('Model directory: ')
     data_dir = input('Data directory: ')
-    # train_model(model_dir, data_dir)
+    train_model(model_dir, data_dir)
     evaluate_model(model_dir, data_dir)
