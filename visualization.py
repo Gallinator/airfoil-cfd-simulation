@@ -31,7 +31,8 @@ def plot_airfoil(alpha, landmarks: np.ndarray,
                  u: np.ndarray,
                  v: np.ndarray,
                  rho: np.ndarray,
-                 energy: np.ndarray):
+                 energy: np.ndarray
+                 , cl: float, cd: float, cm: float):
     airfoil_mask = mask != 1.0
 
     fig = plt.figure(figsize=(36, 12), layout='constrained')
@@ -68,6 +69,12 @@ def plot_airfoil(alpha, landmarks: np.ndarray,
     v[mask == 1] = 0
     ax_stream.streamplot(grid_x.T, grid_y.T, u.T, v.T, color=velocity.T,
                          broken_streamlines=False, arrowsize=0, density=3, cmap='jet')
+    coefs_text = f'Cd = {cd:.3f}\nCl = {cl:.3f}\nCm = {cm:.3f}'
+    box_props = dict(boxstyle='round', alpha=0.9)
+    ax_stream.text(0.05, 0.95, coefs_text, transform=ax_stream.transAxes,
+                   verticalalignment='top',
+                   bbox=box_props,
+                   fontsize=30)
     ax_stream.set_aspect('equal')
 
     plt.ioff()

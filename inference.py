@@ -114,7 +114,8 @@ def run_inference():
     cd, cl, cm = denormalize_coefficients(cd, cl, cm, scaler=coefs_scaler)
 
     plot_airfoil(alpha, landmark, airfoil_mask.numpy(force=True)[0],
-                 grid_coords_x, grid_coords_y, pred_u[0], pred_v[0], pred_rho[0], pred_energy[0])
+                 grid_coords_x, grid_coords_y, pred_u[0], pred_v[0], pred_rho[0], pred_energy[0],
+                 cl[0], cd[0], cm[0])
 
 
 if __name__ == '__main__':
