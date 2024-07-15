@@ -6,7 +6,8 @@ import torch
 from matplotlib.transforms import Affine2D
 from matplotlib.widgets import Slider
 from airfoil_dataset import AirfoilDataset
-from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features, get_mask, denormalize_grid
+from data_preprocessing import load_scaler, normalize_landmarks, denormalize_features, get_mask, denormalize_grid, \
+    denormalize_coefficients
 from model import Model
 from airfoil_interactor import AirfoilInteractor
 from utils import get_torch_device
@@ -84,6 +85,7 @@ def generate_free_flow_grids(alpha, shape):
 def run_inference():
     grid_scaler = load_scaler('data/grid_scaler.pkl')
     features_scaler = load_scaler('data/features_scaler.pkl')
+    coefs_scaler = load_scaler('data/coefs_scaler.pkl')
 
     landmark, alpha = edit_custom_airfoil()
 
@@ -94,7 +96,7 @@ def run_inference():
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).to(device).unsqueeze(0)
 
     model = Model()
-    model.load_state_dict(torch.load('models/linear.pt'))
+    model.load_state_dict(torch.load('models/model.pt'))
     model = model.to(device)
     model.eval()
 
@@ -102,11 +104,14 @@ def run_inference():
     flow_x, flow_y = generate_free_flow_grids(alpha, data.grid_shape)
     flow_x, flow_y = flow_x.to(device), flow_y.to(device)
 
-    y, _ = model.forward(flow_x, flow_y, norm_landmark.flatten(start_dim=1), airfoil_mask)
-    pred_u, pred_v, pred_rho, pred_energy = np.reshape(y.numpy(force=True), ((4, 1) + data.grid_shape))
+    flow, coefs = model.forward(flow_x, flow_y, norm_landmark.flatten(start_dim=1), airfoil_mask)
+    pred_u, pred_v, pred_rho, pred_energy = np.reshape(flow.numpy(force=True), ((4, 1) + data.grid_shape))
     pred_u, pred_v, pred_rho, pred_energy = denormalize_features(pred_u, pred_v,
                                                                  pred_rho, pred_energy, scaler=features_scaler)
     grid_coords_x, grid_coords_y = denormalize_grid(data.grid_coords_x, data.grid_coords_y, grid_scaler)
+
+    cd, cl, cm = coefs.flatten().numpy(force=True)
+    cd, cl, cm = denormalize_coefficients(cd, cl, cm, scaler=coefs_scaler)
 
     plot_airfoil(alpha, landmark, airfoil_mask.numpy(force=True)[0],
                  grid_coords_x, grid_coords_y, pred_u[0], pred_v[0], pred_rho[0], pred_energy[0])
