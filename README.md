@@ -11,7 +11,7 @@ The download is about 52.7 GB
 
 # Data files
 The ``` data ``` folder contains the following files:
-- ``` coefs_scaler.pkl``` : saved instance of ``` MinMaxScaler ``` used for the Cl, Cd and Cm normalization
+- ``` coefs_scaler.pkl ``` : saved instance of ``` MinMaxScaler ``` used for the Cl, Cd and Cm normalization
 - ``` features_scaler.pkl ```: saved instance of ``` MinMaxScaler ``` used for velocity, density and energy normalization
 - ``` grid_scaler.pkl ``` : saved instance of ``` MinMaxScaler ``` used for grid normalization
 - ``` grid_coords.npy ```: arrays containing the normalized x and y points coordinates
