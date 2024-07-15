@@ -37,23 +37,17 @@ def train_model(save_path: str, data_path: str):
         for batch in prog:
             optimizer.zero_grad()
 
-            grid_x, grid_y, _, u, v, rho, energy, mask, cd, cl, cm = batch
-            grid_x = grid_x.to(device)
-            grid_y = grid_y.to(device)
-            u = u.to(device)
-            v = v.to(device)
-            rho = rho.to(device)
-            energy = energy.to(device)
-            mask = mask.to(device)
-            coefs = torch.cat((cl, cd, cm), 1).to(device)
-            label = torch.stack((u, v, rho, energy), 1)
+            flow_data, coef_labels, flow_labels = batch
+            flow_data = flow_data.to(device)
+            coef_labels = coef_labels.to(device)
+            flow_labels = flow_labels.to(device)
 
-            pred_flow, pred_coefs = model.forward(grid_x, grid_y, mask)
+            pred_flow, pred_coefs = model.forward(flow_data)
 
-            coefs_loss = loss(coefs, pred_coefs)
-            air_loss = loss(label, pred_flow)
+            coefs_loss = loss(coef_labels, pred_coefs)
+            air_loss = loss(flow_labels, pred_flow)
 
-            batch_loss = air_loss + coefs_loss
+            batch_loss = air_loss + coefs_loss * 0.75
             batch_loss.backward()
             optimizer.step()
 
@@ -82,21 +76,15 @@ def evaluate_model(model_path: str, data_path: str):
     losses = []
 
     for batch in test_loader:
-        grid_x, grid_y, _, u, v, rho, energy, mask, cd, cl, cm = batch
-        u = u.to(device)
-        v = v.to(device)
-        rho = rho.to(device)
-        energy = energy.to(device)
-        mask = mask.to(device)
-        coefs = torch.cat((cl, cd, cm), 1).to(device)
-        grid_x = grid_x.to(device)
-        grid_y = grid_y.to(device)
-        label = torch.stack((u, v, rho, energy), 1)
+        flow_data, coef_labels, flow_labels = batch
+        flow_data = flow_data.to(device)
+        coef_labels = coef_labels.to(device)
+        flow_labels = flow_labels.to(device)
 
-        pred_flow, pred_coefs = model.forward(grid_x, grid_y, mask)
+        pred_flow, pred_coefs = model.forward(flow_data)
 
-        losses.append(loss(pred_flow, label).item())
-        losses.append(loss(pred_coefs, coefs).item())
+        losses.append(loss(pred_flow, flow_labels).item())
+        losses.append(loss(pred_coefs, coef_labels).item())
 
     print(f'Evaluation MSE: {np.mean(losses)}')
 

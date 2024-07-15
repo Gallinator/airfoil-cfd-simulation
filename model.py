@@ -72,9 +72,8 @@ class Model(nn.Module):
             nn.Linear(32, 3),
             nn.LeakyReLU())
 
-    def forward(self, grid_x, grid_y, mask):
-        x = torch.stack((grid_x, grid_y, mask), 1)
-        x1 = self.ds1(x)
+    def forward(self, data):
+        x1 = self.ds1(data)
         x2 = self.ds2(x1)
         x3 = self.ds3(x2)
         x4 = self.ds4(x3)

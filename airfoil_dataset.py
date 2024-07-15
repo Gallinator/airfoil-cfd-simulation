@@ -30,18 +30,13 @@ class AirfoilDataset(Dataset):
         return grid_x, grid_y
 
     def __getitem__(self, item):
-        landmark = torch.tensor(self.landmarks[item], dtype=torch.float32)
-        mask = torch.tensor(self.masks[item], dtype=torch.float32)
-        u = torch.tensor(self.u[item], dtype=torch.float32)
-        v = torch.tensor(self.v[item], dtype=torch.float32)
-        r = torch.tensor(self.r[item], dtype=torch.float32)
-        e = torch.tensor(self.e[item], dtype=torch.float32)
-        cd = torch.tensor([self.cd[item]], dtype=torch.float32)
-        cl = torch.tensor([self.cl[item]], dtype=torch.float32)
-        cm = torch.tensor([self.cm[item]], dtype=torch.float32)
-        grid_x, grid_y = self.get_free_flow_grid(self.alphas[item])
-
-        return grid_x, grid_y, landmark, u, v, r, e, mask, cd, cl, cm
+        flow_u, flow_v = self.get_free_flow_grid(self.alphas[item])
+        flow_data = np.stack((flow_u, flow_v, self.masks[item]))
+        coef_labels = [self.cl[item], self.cd[item], self.cm[item]]
+        flow_labels = np.stack((self.u[item], self.v[item], self.r[item], self.e[item]))
+        return (torch.tensor(flow_data, dtype=torch.float32),
+                torch.tensor(coef_labels, dtype=torch.float32),
+                torch.tensor(flow_labels, dtype=torch.float32))
 
     def __len__(self):
         return len(self.landmarks)
