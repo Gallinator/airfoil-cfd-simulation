@@ -93,7 +93,7 @@ def run_inference():
     data = AirfoilDataset('data/test_airfoils.h5')
     norm_landmark = normalize_landmarks(landmark, grid_scaler)
     airfoil_mask = get_mask(norm_landmark, (data.grid_coords_x, data.grid_coords_y))
-    airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).to(device).unsqueeze(0)
+    airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).unsqueeze(0)
 
     model = Model()
     model.load_state_dict(torch.load('models/model.pt'))
@@ -101,7 +101,7 @@ def run_inference():
     model.eval()
 
     flow_x, flow_y = generate_free_flow_grids(alpha, data.grid_shape)
-    flow_x, flow_y = flow_x.to(device), flow_y.to(device)
+    flow_data = torch.stack((flow_x, flow_y, airfoil_mask), 1).to(device)
 
     flow, coefs = model.forward(flow_x, flow_y, airfoil_mask)
     pred_u, pred_v, pred_rho, pred_energy = np.reshape(flow.numpy(force=True), ((4, 1) + data.grid_shape))
