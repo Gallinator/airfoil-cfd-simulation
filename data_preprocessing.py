@@ -14,7 +14,7 @@ from h5py import File
 from scipy.interpolate import griddata
 from sklearn.preprocessing import MinMaxScaler
 
-from visualization import plot_raw_data
+from visualization import plot_raw_data, plot_airfoil
 
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
 TRAIN_FILE = 'train_airfoils.h5'
@@ -313,6 +313,24 @@ def show_raw_data_example(file_path: str):
     plt.show()
 
 
+def show_normalized_data_sample(file_path: str):
+    with h5py.File(file_path, 'r') as src:
+        i = random.randint(0, len('alpha'))
+        alpha = src['alpha'][i]
+        landmark = src['landmarks'][i][()]
+        grid_x, grid_y = src['grid'][()]
+        u = src['u'][i][()]
+        v = src['v'][i][()]
+        rho = src['rho'][i][()]
+        energy = src['energy'][i][()]
+        cl = src['C_l'][i]
+        cd = src['C_d'][i]
+        cm = src['C_m'][i]
+        mask = src['masks']
+    plot_airfoil(alpha, landmark, mask, grid_x, grid_y, u, v, rho, energy, cl, cd, cm)
+    plt.show()
+
+
 if __name__ == '__main__':
     download_dir = input('Data download directory: ')
     download_data(download_dir)
@@ -326,3 +344,4 @@ if __name__ == '__main__':
                             128j,
                             num_samples,
                             train_size)
+    show_normalized_data_sample(os.path.join(data_dir, TEST_FILE))
