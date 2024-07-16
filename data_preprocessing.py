@@ -315,7 +315,7 @@ def show_raw_data_example(file_path: str):
 
 def show_normalized_data_sample(file_path: str):
     with h5py.File(file_path, 'r') as src:
-        i = random.randint(0, len('alpha'))
+        i = random.randint(0, len(src['alpha']))
         alpha = src['alpha'][i]
         landmark = src['landmarks'][i][()]
         grid_x, grid_y = src['grid'][()]
