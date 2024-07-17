@@ -46,30 +46,30 @@ class Model(nn.Module):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-        self.ds1 = EncoderBlock(3, 64, 4, 2, 1)
-        self.ds2 = EncoderBlock(64, 128, 4, 2, 1)
-        self.ds3 = EncoderBlock(128, 128, 4, 2, 1)
-        self.ds4 = EncoderBlock(128, 256, 4, 2, 1)
-        self.ds5 = EncoderBlock(256, 512, 2, 2)
-        self.ds6 = EncoderBlock(512, 512, 2, 2)
-        self.ds7 = EncoderBlock(512, 512, 2, 2)
+        self.ds1 = EncoderBlock(3, 64, 4, 2, 1,dropout=0.01)
+        self.ds2 = EncoderBlock(64, 128, 4, 2, 1,dropout=0.01)
+        self.ds3 = EncoderBlock(128, 128, 4, 2, 1,dropout=0.01)
+        self.ds4 = EncoderBlock(128, 256, 4, 2, 1,dropout=0.01)
+        self.ds5 = EncoderBlock(256, 512, 2, 2,dropout=0.01)
+        self.ds6 = EncoderBlock(512, 512, 2, 2,dropout=0.01)
+        self.ds7 = EncoderBlock(512, 512, 2, 2,dropout=0.01)
 
-        self.us1 = DecoderBlock(512, 512, 1, 1)
-        self.us2 = DecoderBlock(1024, 512, 1, 1)
-        self.us3 = DecoderBlock(1024, 256, 3, 1, 1)
-        self.us4 = DecoderBlock(512, 128, 3, 1, 1)
-        self.us5 = DecoderBlock(256, 128, 3, 1, 1)
-        self.us6 = DecoderBlock(256, 64, 3, 1, 1)
-        self.us7 = DecoderBlock(128, 4, 3, 1, 1)
+        self.us1 = DecoderBlock(512, 512, 1, 1,dropout=0.01)
+        self.us2 = DecoderBlock(1024, 512, 1, 1,dropout=0.01)
+        self.us3 = DecoderBlock(1024, 256, 3, 1, 1,dropout=0.01)
+        self.us4 = DecoderBlock(512, 128, 3, 1, 1,dropout=0.01)
+        self.us5 = DecoderBlock(256, 128, 3, 1, 1,dropout=0.01)
+        self.us6 = DecoderBlock(256, 64, 3, 1, 1,dropout=0.01)
+        self.us7 = DecoderBlock(128, 4, 3, 1, 1,dropout=0.01)
 
         self.coefs_encoder = nn.Sequential(
-            EncoderBlock(3, 32, 4, 2, 1),
-            EncoderBlock(32, 64, 4, 2, 1),
-            EncoderBlock(64, 64, 4, 2, 1),
-            EncoderBlock(64, 128, 4, 2, 1),
-            EncoderBlock(128, 256, 2, 2),
-            EncoderBlock(256, 256, 2, 2),
-            EncoderBlock(256, 256, 2, 2),
+            EncoderBlock(3, 32, 4, 2, 1,dropout=0.01),
+            EncoderBlock(32, 64, 4, 2, 1,dropout=0.01),
+            EncoderBlock(64, 64, 4, 2, 1,dropout=0.01),
+            EncoderBlock(64, 128, 4, 2, 1,dropout=0.01),
+            EncoderBlock(128, 256, 2, 2,dropout=0.01),
+            EncoderBlock(256, 256, 2, 2,dropout=0.01),
+            EncoderBlock(256, 256, 2, 2,dropout=0.01),
         )
 
         self.coefs_linear = nn.Sequential(
