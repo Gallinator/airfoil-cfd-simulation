@@ -92,7 +92,7 @@ def run_inference(data_path: str, model_path: str):
 
     grid_coords_x, grid_coords_y = np.load(os.path.join(data_path, 'grid_coords.npy'))
     grid_shape = grid_coords_x.shape
-    norm_landmark = normalize_landmarks(landmark, grid_scaler)
+    norm_landmark = normalize_landmarks(landmark.copy(), grid_scaler)
     airfoil_mask = get_mask(norm_landmark, (grid_coords_x, grid_coords_y))
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).unsqueeze(0)
 
