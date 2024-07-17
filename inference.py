@@ -121,10 +121,10 @@ def run_inference(data_path: str, model_path: str):
 
 def build_arg_parser():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('--data', '-d', type=str, default='data',
+    arg_parser.add_argument('--data-dir', '-d', type=str, default='data',
                             help='directory containing the feature scalers and grid coordinates')
-    arg_parser.add_argument('--model', '-m', type=str, default='models',
-                            help='directory containing the model')
+    arg_parser.add_argument('--weights-dir', '-w', type=str, default='models',
+                            help='directory containing the model weights')
     return arg_parser
 
 
