@@ -113,7 +113,7 @@ def get_flow_fields(src: File, indices) -> list:
 def normalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler=None) -> tuple:
     grid_mat = np.concatenate((grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)), axis=1)
     if scaler is None:
-        scaler = MinMaxScaler().fit(grid_mat)
+        scaler = MinMaxScaler(copy=False).fit(grid_mat)
     norm_grid_mat = scaler.transform(grid_mat)
     norm_grid_x, norm_grid_y = np.hsplit(norm_grid_mat, 2)
     return norm_grid_x.reshape(grid_x.shape), norm_grid_y.reshape(grid_y.shape), scaler
@@ -135,11 +135,11 @@ def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> 
 
     feat_scaler = scaler
     if feat_scaler is None:
-        feat_scaler = MinMaxScaler().fit(feature_mat)
+        feat_scaler = MinMaxScaler(copy=False).fit(feature_mat)
     norm_feature_mat = feat_scaler.transform(feature_mat)
 
-    u_norm = (u_flat * feat_scaler.scale_[-1]).reshape(-1, features_shape[2], features_shape[3])
-    v_norm = (v_flat * feat_scaler.scale_[-1]).reshape(-1, features_shape[2], features_shape[3])
+    u_norm = (u_flat * feat_scaler.scale_[-1] + feat_scaler.min_[-1]).reshape(-1, features_shape[2], features_shape[3])
+    v_norm = (v_flat * feat_scaler.scale_[-1] + feat_scaler.min_[-1]).reshape(-1, features_shape[2], features_shape[3])
     norm_feature_mat = norm_feature_mat[:, :-1]
     return [u_norm, v_norm] + norm_feature_mat.T.reshape(features_shape).tolist() + [feat_scaler]
 
@@ -150,7 +150,7 @@ def normalize_coefficients(*coefs, scaler=None) -> list:
 
     coefs_scaler = scaler
     if coefs_scaler is None:
-        coefs_scaler = MinMaxScaler().fit(coefs_mat)
+        coefs_scaler = MinMaxScaler(copy=False).fit(coefs_mat)
 
     norm_coefs_mat = coefs_scaler.transform(coefs_mat)
     return np.array(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1).tolist() + [coefs_scaler]
@@ -317,7 +317,7 @@ def show_raw_data_example(file_path: str):
 
 def show_normalized_data_sample(file_path: str):
     with h5py.File(file_path, 'r') as src:
-        i = random.randint(0, len(src['alpha']))
+        i = random.randint(0, len(src['alpha']) - 1)
         alpha = src['alpha'][i]
         landmark = src['landmarks'][i][()]
         grid_x, grid_y = src['grid'][()]
