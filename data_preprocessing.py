@@ -1,3 +1,4 @@
+import argparse
 import multiprocessing
 import os.path
 import pickle
@@ -338,17 +339,29 @@ def show_normalized_data_sample(file_path: str):
     plt.show()
 
 
+def build_arg_parser():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--data', '-d', type=str, default='data',
+                            help='directory to store the preprocessed data into')
+    arg_parser.add_argument('--download', '-dl', type=str, default='data',
+                            help='directory to store the downloaded data into')
+    arg_parser.add_argument('--samples', '-s', type=int, default=8996,
+                            help='total size of the preprocessed data')
+    arg_parser.add_argument('--train', '-t', type=float, default=0.8,
+                            help='size of the train set. Must be in [0,1]')
+    return arg_parser
+
+
 if __name__ == '__main__':
-    download_dir = input('Data download directory: ')
+    args = build_arg_parser().parse_args()
+    download_dir = args.download
+    data_dir = args.data
+
     download_data(download_dir)
     show_raw_data_example(os.path.join(download_dir, 'airfoil_9k_data.h5'))
-
-    data_dir = input('Datasets save directory: ')
-    num_samples = int(input('Total samples: '))
-    train_size = float(input('Training data proportion [0,1]: '))
     create_sampled_datasets(os.path.join(download_dir, 'airfoil_9k_data.h5'),
                             data_dir,
                             128j,
-                            num_samples,
-                            train_size)
+                            args.samples,
+                            args.train)
     show_normalized_data_sample(os.path.join(data_dir, TEST_FILE))
