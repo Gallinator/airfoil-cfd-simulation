@@ -25,7 +25,7 @@ def train_model(save_path: str, data_path: str):
     model = model.to(device)
     model.train()
 
-    epochs = 120
+    flow_epochs = 120
     loss = MSELoss()
 
     loss_tracker = LossTracker('Total')
@@ -33,7 +33,7 @@ def train_model(save_path: str, data_path: str):
     print('Training flow layers')
     flow_optimizer = AdamW(model.flow_parameters(), lr=0.0001)
     model.freeze_coefficients(True)
-    for e in range(epochs):
+    for e in range(flow_epochs):
         prog = tqdm.tqdm(train_loader, f'Epoch {e}')
         for batch in prog:
             flow_optimizer.zero_grad()
@@ -55,10 +55,11 @@ def train_model(save_path: str, data_path: str):
         torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
 
     print('Training coefficients layers')
+    coefs_epochs = 50
     coefs_optimizer = AdamW(model.coef_parameters(), lr=0.0001)
     model.freeze_airflow(True)
     model.freeze_coefficients(False)
-    for e in range(epochs):
+    for e in range(coefs_epochs):
         prog = tqdm.tqdm(train_loader, f'Epoch {e}')
         for batch in prog:
             coefs_optimizer.zero_grad()
