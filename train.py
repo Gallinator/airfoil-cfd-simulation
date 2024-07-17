@@ -28,7 +28,7 @@ def train_model(save_path: str, data_path: str):
     flow_epochs = 120
     loss = MSELoss()
 
-    loss_tracker = LossTracker('Total')
+    flow_loss_tracker = LossTracker('Total')
 
     print('Training flow layers')
     flow_optimizer = AdamW(model.flow_parameters(), lr=0.0001)
@@ -48,14 +48,15 @@ def train_model(save_path: str, data_path: str):
             batch_loss.backward()
             flow_optimizer.step()
 
-            loss_tracker.batch_update(Total=batch_loss.item())
+            flow_loss_tracker.batch_update(Total=batch_loss.item())
 
-        loss_tracker.epoch_update()
-        prog.write(f'Epoch {e} total loss: {loss_tracker.loss_history['Total'][-1]}')
+        flow_loss_tracker.epoch_update()
+        prog.write(f'Epoch {e} total loss: {flow_loss_tracker.loss_history['Total'][-1]}')
         torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
 
     print('Training coefficients layers')
-    coefs_epochs = 50
+    coefs_loss_tracker = LossTracker('Total')
+    coefs_epochs = 30
     coefs_optimizer = AdamW(model.coef_parameters(), lr=0.0001)
     model.freeze_airflow(True)
     model.freeze_coefficients(False)
@@ -74,10 +75,10 @@ def train_model(save_path: str, data_path: str):
             batch_loss.backward()
             coefs_optimizer.step()
 
-            loss_tracker.batch_update(Total=batch_loss.item())
+            coefs_loss_tracker.batch_update(Total=batch_loss.item())
 
-        loss_tracker.epoch_update()
-        prog.write(f'Epoch {e} total loss: {loss_tracker.loss_history['Total'][-1]}')
+        coefs_loss_tracker.epoch_update()
+        prog.write(f'Epoch {e} total loss: {coefs_loss_tracker.loss_history['Total'][-1]}')
         torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
 
     plot_training_history(loss_tracker)
