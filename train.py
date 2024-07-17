@@ -1,3 +1,4 @@
+import argparse
 import os.path
 
 import matplotlib.pyplot as plt
@@ -117,8 +118,18 @@ def evaluate_model(model_path: str, data_path: str):
     print(f'Total MSE: {flow_mean + coefs_mean}')
 
 
+def build_arg_parser():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--data', '-d', type=str, default='data',
+                            help='directory containing the preprocessed data')
+    arg_parser.add_argument('--model', '-m', type=str, default='models',
+                            help='directory to save the model into')
+    return arg_parser
+
+
 if __name__ == '__main__':
-    model_dir = input('Model directory: ')
-    data_dir = input('Data directory: ')
+    args = build_arg_parser().parse_args()
+    model_dir = args.model
+    data_dir = args.data
     train_model(model_dir, data_dir)
     evaluate_model(model_dir, data_dir)
