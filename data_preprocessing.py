@@ -354,14 +354,14 @@ def build_arg_parser():
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
-    download_dir = args.download
-    data_dir = args.data
+    download_dir = args.download_dir
+    data_dir = args.data_dir
 
     download_data(download_dir)
     show_raw_data_example(os.path.join(download_dir, 'airfoil_9k_data.h5'))
     create_sampled_datasets(os.path.join(download_dir, 'airfoil_9k_data.h5'),
                             data_dir,
                             128j,
-                            args.samples,
-                            args.train)
+                            args.num_samples,
+                            args.train_size)
     show_normalized_data_sample(os.path.join(data_dir, TEST_FILE))
