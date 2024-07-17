@@ -129,7 +129,7 @@ def build_arg_parser():
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
-    model_dir = args.model
-    data_dir = args.data
-    train_model(model_dir, data_dir)
-    evaluate_model(model_dir, data_dir)
+    weights_dir = args.weights_dir
+    data_dir = args.data_dir
+    train_model(weights_dir, data_dir)
+    evaluate_model(weights_dir, data_dir)
