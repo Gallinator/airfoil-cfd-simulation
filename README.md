@@ -4,10 +4,12 @@ Trained on the [Airfoil Computational Fluid Dynamics - 9k shapes, 2 AoA's ](http
 ## How to run
 
 - Install requirements ``` pip install -r requirements.txt ```
-- Run ``` python inference.py ``` to test the model
-- [Optional] Run ``` python data_preprocessing.py``` to download the data and perform the preprocessing.<br>
-The download is about 52.7 GB
+- Run ``` python inference.py ``` to test the model.
+- [Optional] Run ``` python data_preprocessing.py --num-samples 8996 --train-size 0.8``` to download the data and perform the preprocessing.<br>
+The download is about 52.7 GB and may take a long time
 - [Optional] Run ``` python train.py ``` to train a new model
+
+The model, data download and preprocess directory can be customized. Add the ``` -h ``` argument when running the scripts for more information.
 
 # Data files
 The ``` data ``` folder contains the following files:
