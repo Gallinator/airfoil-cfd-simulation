@@ -344,7 +344,7 @@ def build_arg_parser():
     arg_parser.add_argument('--data', '-d', type=str, default='data',
                             help='directory to store the preprocessed data into')
     arg_parser.add_argument('--download', '-dl', type=str, default='data',
-                            help='directory to store the downloaded data into')
+                            help='directory to store the downloaded data into. The download size is 52.7 Gb')
     arg_parser.add_argument('--samples', '-s', type=int, default=8996,
                             help='total size of the preprocessed data')
     arg_parser.add_argument('--train', '-t', type=float, default=0.8,
