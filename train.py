@@ -120,10 +120,10 @@ def evaluate_model(model_path: str, data_path: str):
 
 def build_arg_parser():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('--data', '-d', type=str, default='data',
+    arg_parser.add_argument('--data-dir', '-d', type=str, default='data',
                             help='directory containing the preprocessed data')
-    arg_parser.add_argument('--model', '-m', type=str, default='models',
-                            help='directory to save the model into')
+    arg_parser.add_argument('--weights-dir', '-w', type=str, default='models',
+                            help='directory to save the model weights into')
     return arg_parser
 
 
