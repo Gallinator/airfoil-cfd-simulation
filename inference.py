@@ -1,3 +1,4 @@
+import argparse
 import math
 import os.path
 
@@ -118,7 +119,15 @@ def run_inference(data_path: str, model_path: str):
                  cl[0], cd[0], cm[0])
 
 
+def build_arg_parser():
+    arg_parser = argparse.ArgumentParser()
+    arg_parser.add_argument('--data', '-d', type=str, default='data',
+                            help='directory containing the feature scalers and grid coordinates')
+    arg_parser.add_argument('--model', '-m', type=str, default='models',
+                            help='directory containing the model')
+    return arg_parser
+
+
 if __name__ == '__main__':
-    model_dir = input('Model directory: ')
-    data_dir = input('Data directory: ')
-    run_inference(data_dir, model_dir)
+    args = build_arg_parser().parse_args()
+    run_inference(args.data, args.model)
