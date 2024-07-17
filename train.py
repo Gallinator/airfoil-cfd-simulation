@@ -81,7 +81,8 @@ def train_model(save_path: str, data_path: str):
         prog.write(f'Epoch {e} total loss: {coefs_loss_tracker.loss_history['Total'][-1]}')
         torch.save(model.state_dict(), os.path.join(save_path, 'model.pt'))
 
-    plot_training_history(loss_tracker)
+    plot_training_history(flow_loss_tracker)
+    plot_training_history(coefs_loss_tracker)
     plt.show()
 
 
