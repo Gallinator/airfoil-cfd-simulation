@@ -341,13 +341,13 @@ def show_normalized_data_sample(file_path: str):
 
 def build_arg_parser():
     arg_parser = argparse.ArgumentParser()
-    arg_parser.add_argument('--data', '-d', type=str, default='data',
+    arg_parser.add_argument('--data-dir', '-d', type=str, default='data',
                             help='directory to store the preprocessed data into')
-    arg_parser.add_argument('--download', '-dl', type=str, default='data',
+    arg_parser.add_argument('--download-dir', '-dl', type=str, default='data',
                             help='directory to store the downloaded data into. The download size is 52.7 Gb')
-    arg_parser.add_argument('--samples', '-s', type=int, default=8996,
+    arg_parser.add_argument('--num-samples', '-ns', type=int, default=8996,
                             help='total size of the preprocessed data')
-    arg_parser.add_argument('--train', '-t', type=float, default=0.8,
+    arg_parser.add_argument('--train-size', '-ts', type=float, default=0.8,
                             help='size of the train set. Must be in [0,1]')
     return arg_parser
 
