@@ -45,10 +45,10 @@ def denormalize_landmarks(landmarks: np.ndarray, scaler) -> np.ndarray:
     return denorm_feature_mat.reshape(landmarks.shape)
 
 
-def denormalize_features(u, v, *features, scaler) -> np.ndarray:
-    features_shape = np.asarray(features).shape
-    feature_mat = np.array(features).reshape(features_shape[0], -1).T
-    u_flat, v_flat = np.array(u).flatten(), np.array(v).flatten()
+def denormalize_features(u: np.ndarray, v: np.ndarray, *features, scaler) -> np.ndarray:
+    features_shape = np.shape(features)
+    feature_mat = np.array(features, copy=False).reshape(features_shape[0], -1).T
+    u_flat, v_flat = u.ravel(), v.ravel()
     vel = np.sqrt(np.square(u_flat) + np.square(v_flat)).reshape(-1, 1)
 
     feature_mat = np.concatenate((feature_mat, vel), axis=1)
@@ -126,11 +126,11 @@ def normalize_landmarks(landmarks: np.ndarray, grid_scaler):
 
 
 def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> list:
-    features_shape = np.asarray(features).shape
-    u_flat = np.array(u).flatten()
-    v_flat = np.array(v).flatten()
+    features_shape = np.shape(features)
+    u_flat = u.ravel()
+    v_flat = v.ravel()
     vel = np.sqrt(np.square(u_flat) + np.square(v_flat)).reshape(-1, 1)
-    feature_mat = np.array(features).reshape(features_shape[0], -1).T
+    feature_mat = np.array(features, copy=False).reshape(features_shape[0], -1).T
     feature_mat = np.concatenate((feature_mat, vel), axis=1)
 
     feat_scaler = scaler
@@ -141,7 +141,7 @@ def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> 
     u_norm = (u_flat * feat_scaler.scale_[-1] + feat_scaler.min_[-1]).reshape(-1, features_shape[2], features_shape[3])
     v_norm = (v_flat * feat_scaler.scale_[-1] + feat_scaler.min_[-1]).reshape(-1, features_shape[2], features_shape[3])
     norm_feature_mat = norm_feature_mat[:, :-1]
-    return [u_norm, v_norm] + norm_feature_mat.T.reshape(features_shape).tolist() + [feat_scaler]
+    return [u_norm, v_norm] + [*norm_feature_mat.T.reshape(features_shape)] + [feat_scaler]
 
 
 def normalize_coefficients(*coefs, scaler=None) -> list:
@@ -153,7 +153,7 @@ def normalize_coefficients(*coefs, scaler=None) -> list:
         coefs_scaler = MinMaxScaler(copy=False).fit(coefs_mat)
 
     norm_coefs_mat = coefs_scaler.transform(coefs_mat)
-    return np.array(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1).tolist() + [coefs_scaler]
+    return [*np.array(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1)] + [coefs_scaler]
 
 
 def denormalize_coefficients(*coefs, scaler) -> np.ndarray:
@@ -224,7 +224,12 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
                 energy[i] = e
                 masks[i] = m
 
-        alphas = np.array([int(a) for _, a in enumerate(alphas)])
+        u = np.array(u, copy=False)
+        v = np.array(v, copy=False)
+        rho = np.array(rho, copy=False)
+        energy = np.array(energy, copy=False)
+
+        alphas = np.array([int(a) for _, a in enumerate(alphas)], copy=False)
         coefs_04 = extract_coefs(source['alpha+04'], indices_04)
         coefs_12 = extract_coefs(source['alpha+12'], indices_12)
         c_d, c_l, c_m = np.concatenate((coefs_04, coefs_12), 1)
