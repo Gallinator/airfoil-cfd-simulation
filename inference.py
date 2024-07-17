@@ -130,4 +130,4 @@ def build_arg_parser():
 
 if __name__ == '__main__':
     args = build_arg_parser().parse_args()
-    run_inference(args.data, args.model)
+    run_inference(args.data_dir, args.weights_dir)
