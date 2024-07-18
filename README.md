@@ -3,6 +3,7 @@ Simulate the behaviour of airflow around airfoils using neural networks.<br>
 Trained on the [Airfoil Computational Fluid Dynamics - 9k shapes, 2 AoA's ](https://catalog.data.gov/dataset/airfoil-computational-fluid-dynamics-9k-shapes-2-aoas) dataset.
 ## How to run
 
+- Install [PyTorch](https://pytorch.org/get-started/locally/) with CPU or GPU support
 - Install requirements ``` pip install -r requirements.txt ```
 - Run ``` python inference.py ``` to test the model.
 - [Optional] Run ``` python data_preprocessing.py --num-samples 8996 --train-size 0.8``` to download the data and perform the preprocessing.<br>
