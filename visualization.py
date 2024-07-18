@@ -27,7 +27,7 @@ def plot_training_history(loss_tracker: LossTracker):
 def plot_raw_data(alpha: int, grid_x, grid_y, landmarks, u, v, rho, energy, omega, cl, cd, cm):
     fig = plt.figure(figsize=(36, 12), layout='constrained')
     fig.suptitle(f'AoA={int(alpha)}, $C_d$ = {cd:.3f} $C_l$ = {cl:.3f} $C_m$ = {cm:.3f}', fontsize=16)
-    ax_u, ax_v, ax_r, ax_e, ax_o, ax1, ax2, ax3 = fig.subplots(2, 4).flatten()
+    ax_u, ax_v, ax_r, ax_o, ax0, ax_e = fig.subplots(2, 3).flatten()
     ax_u.set_title('Rho U')
     ax_u.fill(landmarks[:, 0], landmarks[:, 1], color='grey', zorder=10)
     u_plot = ax_u.scatter(grid_x, grid_y, c=u, s=1)
