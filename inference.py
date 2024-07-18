@@ -98,7 +98,7 @@ def run_inference(data_path: str, model_path: str):
     airfoil_mask = torch.tensor(airfoil_mask, dtype=torch.float32).unsqueeze(0)
 
     model = Model()
-    model.load_state_dict(torch.load(os.path.join(model_path, 'model.pt')))
+    model.load_state_dict(torch.load(os.path.join(model_path, 'model.pt'), map_location=device))
     model = model.to(device)
     model.eval()
 
