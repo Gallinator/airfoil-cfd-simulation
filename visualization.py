@@ -58,9 +58,7 @@ def plot_raw_data(alpha: int, grid_x, grid_y, landmarks, u, v, rho, energy, omeg
     fig.colorbar(o_plot, ax=ax_o)
     ax_o.set_aspect('equal')
 
-    ax1.set_axis_off()
-    ax2.set_axis_off()
-    ax3.set_axis_off()
+    ax0.set_axis_off()
 
 
 def plot_airfoil(alpha, landmarks: np.ndarray,
