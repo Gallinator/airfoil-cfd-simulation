@@ -48,7 +48,7 @@ def denormalize_landmarks(landmarks: np.ndarray, scaler) -> np.ndarray:
 
 def denormalize_features(u: np.ndarray, v: np.ndarray, *features, scaler) -> np.ndarray:
     features_shape = np.shape(features)
-    feature_mat = np.array(features, copy=False).reshape(features_shape[0], -1).T
+    feature_mat = np.asarray(features).reshape(features_shape[0], -1).T
     u_flat, v_flat = u.ravel(), v.ravel()
     vel = np.sqrt(np.square(u_flat) + np.square(v_flat)).reshape(-1, 1)
 
@@ -131,7 +131,7 @@ def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> 
     u_flat = u.ravel()
     v_flat = v.ravel()
     vel = np.sqrt(np.square(u_flat) + np.square(v_flat)).reshape(-1, 1)
-    feature_mat = np.array(features, copy=False).reshape(features_shape[0], -1).T
+    feature_mat = np.asarray(features).reshape(features_shape[0], -1).T
     feature_mat = np.concatenate((feature_mat, vel), axis=1)
 
     feat_scaler = scaler
@@ -154,14 +154,14 @@ def normalize_coefficients(*coefs, scaler=None) -> list:
         coefs_scaler = MinMaxScaler(copy=False).fit(coefs_mat)
 
     norm_coefs_mat = coefs_scaler.transform(coefs_mat)
-    return [*np.array(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1)] + [coefs_scaler]
+    return [*np.asarray(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1)] + [coefs_scaler]
 
 
 def denormalize_coefficients(*coefs, scaler) -> np.ndarray:
     num_coefs = len(coefs)
     coefs_mat = np.vstack(coefs).T
     norm_coefs_mat = scaler.inverse_transform(coefs_mat)
-    return np.array(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1)
+    return np.asarray(np.vsplit(norm_coefs_mat.T, num_coefs)).squeeze(1)
 
 
 def save_scaler(scaler, path: str):
@@ -200,7 +200,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
     if os.path.exists(test_path):
         os.remove(test_path)
 
-    with (h5pickle.File(source_path, 'r') as source):
+    with h5pickle.File(source_path, 'r') as source:
         landmarks = source['shape']['landmarks'][()]
         data_len = len(landmarks)
         per_alpha_samples = num_samples // 2
@@ -225,12 +225,12 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
                 energy[i] = e
                 masks[i] = m
 
-        u = np.array(u, copy=False)
-        v = np.array(v, copy=False)
-        rho = np.array(rho, copy=False)
-        energy = np.array(energy, copy=False)
+        u = np.asarray(u)
+        v = np.asarray(v)
+        rho = np.asarray(rho)
+        energy = np.asarray(energy)
 
-        alphas = np.array([int(a) for _, a in enumerate(alphas)], copy=False)
+        alphas = np.asarray([int(a) for _, a in enumerate(alphas)], copy=False)
         coefs_04 = extract_coefs(source['alpha+04'], indices_04)
         coefs_12 = extract_coefs(source['alpha+12'], indices_12)
         c_d, c_l, c_m = np.concatenate((coefs_04, coefs_12), 1)
@@ -253,7 +253,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['alpha'] = alphas[:train_end]
         dest['landmarks'] = norm_landmarks[:train_end]
         dest['masks'] = masks[:train_end]
-        dest['grid'] = np.array([norm_grid_x, norm_grid_y])
+        dest['grid'] = np.asarray([norm_grid_x, norm_grid_y])
         dest['u'] = train_u
         dest['v'] = train_v
         dest['rho'] = train_r
@@ -275,7 +275,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['alpha'] = alphas[train_end:]
         dest['masks'] = masks[train_end:]
         dest['landmarks'] = norm_landmarks[train_end:]
-        dest['grid'] = np.array([norm_grid_x, norm_grid_y])
+        dest['grid'] = np.asarray([norm_grid_x, norm_grid_y])
         dest['u'] = test_u
         dest['v'] = test_v
         dest['rho'] = test_r
@@ -287,7 +287,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
     save_scaler(grid_scaler, os.path.join(dest_path, 'grid_scaler.pkl'))
     save_scaler(feature_scaler, os.path.join(dest_path, 'features_scaler.pkl'))
     save_scaler(coefs_scaler, os.path.join(dest_path, 'coefs_scaler.pkl'))
-    np.save(os.path.join(dest_path, 'grid_coords.npy'), np.array([norm_grid_x, norm_grid_y]))
+    np.save(os.path.join(dest_path, 'grid_coords.npy'), np.asarray([norm_grid_x, norm_grid_y]))
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
