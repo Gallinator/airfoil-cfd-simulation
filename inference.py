@@ -62,7 +62,7 @@ def edit_custom_airfoil() -> tuple:
                                              transform=get_axline_transform(airfoil_ax, DEFAULT_ALPHA)))
     airfoil_ax.set_aspect('equal')
 
-    alpha_slider = Slider(ax=alpha_ax, label='Angle of attack', valmin=-45, valmax=45, valstep=1, valinit=DEFAULT_ALPHA)
+    alpha_slider = Slider(ax=alpha_ax, label='Angle of attack', valmin=-4, valmax=20, valstep=1, valinit=DEFAULT_ALPHA)
 
     def update_alpha_line(alpha_deg):
         for l in alpha_lines:
