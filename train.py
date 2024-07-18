@@ -92,7 +92,7 @@ def evaluate_model(model_path: str, data_path: str):
     eval_loader = DataLoader(eval_data, batch_size=16, shuffle=True, num_workers=8)
 
     model = Model()
-    model.load_state_dict(torch.load(os.path.join(model_path, 'model.pt')))
+    model.load_state_dict(torch.load(os.path.join(model_path, 'model.pt'), map_location=device))
     model = model.to(device)
     model.eval()
 
