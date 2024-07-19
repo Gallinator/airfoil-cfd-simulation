@@ -83,6 +83,9 @@ class Model(nn.Module):
             nn.LeakyReLU())
 
     def flow_parameters(self):
+        """
+        :return: the flow network parameters
+        """
         return (list(self.ds1.parameters()) +
                 list(self.ds2.parameters()) +
                 list(self.ds3.parameters()) +
@@ -99,15 +102,28 @@ class Model(nn.Module):
                 list(self.us7.parameters()))
 
     def coef_parameters(self):
+        """
+        :return: the coefficients network parameters
+        """
         return list(self.coefs_encoder.parameters()) + list(self.coefs_linear.parameters())
 
     def forward(self, data):
+        """
+        Full forward prediction.
+        :param data: tensor containing u, v and mask in this order
+        :return: a tensor containing u, v, density, energy and a tensor containing lift, drag and momentum coefficients
+        """
         flow_x = self.flow_forward(data)
         coefs_data = torch.concatenate((data[:, -1, :, :].unsqueeze(1), flow_x[:, 0:2, :, :]), 1)
         coefs_x = self.coefs_forward(coefs_data)
         return flow_x, coefs_x
 
     def flow_forward(self, data):
+        """
+        Airflow forward prediction
+        :param data: tensor containing u, v and mask in this order
+        :return: a tensor containing u, v, density, energy
+        """
         x1 = self.ds1(data)
         x2 = self.ds2(x1)
         x3 = self.ds3(x2)
@@ -132,11 +148,20 @@ class Model(nn.Module):
         return x
 
     def coefs_forward(self, data):
+        """
+        Coefficients forward prediction
+        :param data: a tensor containing the mask and predicted x and y velocities
+        :return: a tensor containing lift, drag and momentum coefficients
+        """
         x = self.coefs_encoder(data)
         x = self.coefs_linear(torch.flatten(x, 1))
         return x
 
     def freeze_airflow(self, frozen: bool):
+        """
+        Freeze or unfreeze all airflow network parameters
+        :param frozen: pass True to freeze, False to unfreeze
+        """
         self.ds1.requires_grad_(not frozen)
         self.ds2.requires_grad_(not frozen)
         self.ds3.requires_grad_(not frozen)
@@ -153,5 +178,9 @@ class Model(nn.Module):
         self.us7.requires_grad_(not frozen)
 
     def freeze_coefficients(self, frozen: bool):
+        """
+        Freeze or unfreeze all coefficient network parameters
+        :param frozen: pass True to freeze, False to unfreeze
+        """
         self.coefs_linear.requires_grad_(not frozen)
         self.coefs_encoder.requires_grad_(not frozen)
