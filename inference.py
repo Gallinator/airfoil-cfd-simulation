@@ -30,6 +30,10 @@ DEFAULT_ALPHA = 4
 
 
 def sample_beziers(interactor: AirfoilInteractor) -> np.ndarray:
+    """
+    :param interactor: Airfoil editor
+    :return: a (1001,2) array containing the sampled points from the airfoil editor current curve
+    """
     samples_u = np.linspace(0.0, 1.0, 501)
     samples_d = np.linspace(0.0, 1.0, 500)
     upper_points, lower_points = interactor.get_bezier_points(samples_u, samples_d)
@@ -45,10 +49,20 @@ def slope_to_deg(slope):
 
 
 def get_axline_transform(ax, alpha):
+    """
+    Creates a transform to keep the airflow lines equally spaced.
+    :param ax: axis
+    :param alpha: angle of attack
+    :return: the transform
+    """
     return Affine2D().rotate_deg_around(0.5, 0, 90 + alpha) + ax.transData
 
 
 def edit_custom_airfoil() -> tuple:
+    """
+    Shows the airfoil editor.
+    :return: a (1001,2) aray containing the airfoil landmarks and the angle of attack in degrees
+    """
     upper_polygon = Polygon(np.array(DEFAULT_BEZIER_NODES), animated=True)
     fig, axs = plt.subplots(2, 1, layout='constrained', height_ratios=[0.95, 0.01])
     airfoil_ax, alpha_ax = axs
@@ -77,6 +91,12 @@ def edit_custom_airfoil() -> tuple:
 
 
 def generate_free_flow_grids(alpha, shape):
+    """
+
+    :param alpha: angle of attack
+    :param shape: the shape of the grid, usually (128,128)
+    :return: two (N,N) array containing x and y free flow velocity grids
+    """
     grid_x = np.full(shape, math.cos(math.radians(alpha)) * 1)
     grid_x = torch.tensor(grid_x, dtype=torch.float32).unsqueeze(0)
     grid_y = np.full(shape, math.sin(math.radians(alpha)) * 1)
