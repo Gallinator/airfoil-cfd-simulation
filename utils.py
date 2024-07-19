@@ -2,6 +2,9 @@ import torch
 
 
 def get_torch_device():
+    """
+    :return: the GPU device if available, the CPU device otherwise
+    """
     train_on_gpu = torch.cuda.is_available()
 
     if not train_on_gpu:
