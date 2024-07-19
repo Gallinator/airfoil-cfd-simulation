@@ -24,6 +24,10 @@ AIRFOIL_MASK_VALUE = 0
 
 
 def download_data(dest_dir: str):
+    """
+    Downloads the data to a file named airfoil_9k_data.h5
+    :param dest_dir: the download directory path
+    """
     url_resource_name = os.path.basename(DATA_URL)
     file_path = os.path.join(dest_dir, url_resource_name)
     if os.path.exists(file_path):
@@ -47,6 +51,13 @@ def denormalize_landmarks(landmarks: np.ndarray, scaler) -> np.ndarray:
 
 
 def denormalize_features(u: np.ndarray, v: np.ndarray, *features, scaler) -> np.ndarray:
+    """
+    :param u: an (N,128,128) array containing the x velocities
+    :param v: an (N,128,128) array containing the x velocities
+    :param features: other features passed as (N,128,128) arrays
+    :param scaler: the training features scaler
+    :return: an array containing the denormalized features in the same order they were passed
+    """
     features_shape = np.shape(features)
     feature_mat = np.asarray(features).reshape(features_shape[0], -1).T
     u_flat, v_flat = u.ravel(), v.ravel()
@@ -63,6 +74,12 @@ def denormalize_features(u: np.ndarray, v: np.ndarray, *features, scaler) -> np.
 
 
 def denormalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler) -> tuple:
+    """
+    :param grid_x: (128,128) array containing the x coordinates of grid points
+    :param grid_y: (128,128) array containing the y coordinates of grid points
+    :param scaler: the training grid scaler
+    :return: denormalized x and y coordinates grids
+    """
     grid_mat = np.concatenate((grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)), axis=1)
     denorm_grid_mat = scaler.inverse_transform(grid_mat)
     denorm_grid_x, denorm_grid_y = np.hsplit(denorm_grid_mat, 2)
@@ -70,6 +87,12 @@ def denormalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler) -> tuple:
 
 
 def get_mask(airfoil_poly: np.ndarray, grid: tuple):
+    """
+    Generates a binary mask for the airfoil. The mask has value 1 were the airfoil is, 0 elsewhere
+    :param airfoil_poly: an (N, 2) array of airfoil points coordinates
+    :param grid: a tuple containing the x and y grid coordinates
+    :return: the airfoil mask
+    """
     airfoil_path = matplotlib.path.Path(airfoil_poly)
     grid_x, grid_y = grid
     grid_x, grid_y = grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)
@@ -78,6 +101,15 @@ def get_mask(airfoil_poly: np.ndarray, grid: tuple):
 
 
 def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
+    """
+    Function to be executed on the multiprocessing pool.
+    Extracts a sample from the h5 file.
+    :param i: the sample index. This is returned to reconstruct the samples order when collecting the results.
+    :param airfoil_poly: an (N, 2) array of airfoil points coordinates
+    :param sample_grid: a tuple containing the x and y grid coordinates
+    :param ff: the 'fuel_flow' group from the h5 file
+    :return: a tuple containing the index, density*u, density*v, density, energy and mask
+    """
     i = int(i)
     print(f'Sampling airfoil {i}')
     x = ff['x'][()]
@@ -100,7 +132,14 @@ def airfoil_sampling_task(i, airfoil_poly, sample_grid, ff):
 
 
 def get_flow_fields(src: File, indices) -> list:
-    # As h5py groups do not support slicing the only way to select item is to iterate over the whole group
+    """
+    Extracts the 'fuel_flow' groups from the h5 file.
+    As h5py groups do not support slicing the only way to select item is to iterate over the whole group
+    :param src: The angle of attack group
+    :param indices: The indices to extract the group of
+    :return: a list of 'fuel_flow' groups
+    """
+
     ff = [None for _ in range(len(indices))]
     for i, item in enumerate(src['flow_field'].items()):
         try:
@@ -112,6 +151,13 @@ def get_flow_fields(src: File, indices) -> list:
 
 
 def normalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler=None) -> tuple:
+    """
+    Normalizes the grid coordinate with a MinMaxScaler
+    :param grid_x: raw grid x coordinates
+    :param grid_y: raw grid x coordinates
+    :param scaler: the training scaler or None to create a new scaler
+    :return: the normalized grid coordinates
+    """
     grid_mat = np.concatenate((grid_x.reshape(-1, 1), grid_y.reshape(-1, 1)), axis=1)
     if scaler is None:
         scaler = MinMaxScaler(copy=False).fit(grid_mat)
@@ -121,12 +167,26 @@ def normalize_grid(grid_x: np.ndarray, grid_y: np.ndarray, scaler=None) -> tuple
 
 
 def normalize_landmarks(landmarks: np.ndarray, grid_scaler):
+    """
+    :param landmarks: an (N,2) array containing the airfoil vertices coordinates
+    :param grid_scaler: the grid scaler
+    :return: the normalize airfoil landmarks
+    """
     feature_mat = landmarks.reshape(-1, 2)
     norm_feature_mat = grid_scaler.transform(feature_mat)
     return norm_feature_mat.reshape(landmarks.shape)
 
 
 def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> list:
+    """
+    Normalizes the features with a MinMaxScaler.
+    The velocity x and y components are scaled according to their normalized magnitude to keep directional information.
+    :param u: an (N,128,128) array containing the x velocities
+    :param v: an (N,128,128) array containing the y velocities
+    :param features: other features passed as (N,128,128) arrays
+    :param scaler: the training features scaler or None to create a new scaler
+    :return: an array containing the normalized features in the same order they were passed and the scaler
+    """
     features_shape = np.shape(features)
     u_flat = u.ravel()
     v_flat = v.ravel()
@@ -146,6 +206,12 @@ def normalize_features(u: np.ndarray, v: np.ndarray, *features, scaler=None) -> 
 
 
 def normalize_coefficients(*coefs, scaler=None) -> list:
+    """
+    Normalizes the lift, drag and momentum coefficients with a MinMaxScaler
+    :param coefs: coefficients passed as arrays
+    :param scaler: the training scaler or None to create a new scaler
+    :return: a list containing the normalized coefficients in the order they were passed and the scaler
+    """
     num_coefs = len(coefs)
     coefs_mat = np.vstack(coefs).T
 
@@ -158,6 +224,11 @@ def normalize_coefficients(*coefs, scaler=None) -> list:
 
 
 def denormalize_coefficients(*coefs, scaler) -> np.ndarray:
+    """
+    :param coefs: normalized coefficients passed as arrays
+    :param scaler: the training scaler
+    :return: a list containing the normalized coefficients in the order they were passed
+    """
     num_coefs = len(coefs)
     coefs_mat = np.vstack(coefs).T
     norm_coefs_mat = scaler.inverse_transform(coefs_mat)
@@ -173,6 +244,12 @@ def load_scaler(path: str):
 
 
 def extract_coefs(src: File, indices) -> tuple:
+    """
+    Extract coefficients from an angle of attack group
+    :param src: the angle off attack group
+    :param indices: the samples to extract
+    :return: the extracted drag, lift and momentum coefficients
+    """
     cd = src['C_d'][()][indices]
     cl = src['C_l'][()][indices]
     cm = src['C_m'][()][indices]
@@ -180,6 +257,11 @@ def extract_coefs(src: File, indices) -> tuple:
 
 
 def shuffle_data(*data: np.ndarray):
+    """
+    Randomly shuffles data in place
+    :param data: the data to shuffle
+    :return: the shuffled data
+    """
     seed = np.random.randint(0, 2 ** (32 - 1) - 1)
     for d in data:
         rstate = np.random.RandomState(seed)
@@ -187,12 +269,29 @@ def shuffle_data(*data: np.ndarray):
 
 
 def generate_indices(data_len, num_samples):
+    """
+    Generates unique random indices in [0,data_len)
+    :param data_len: the size of the data
+    :param num_samples: the number of samples to generate
+    :return: the generated indices
+    """
     indices = np.arange(data_len, dtype=int)
     np.random.shuffle(indices)
     return indices[:num_samples]
 
 
 def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int, train_size: float):
+    """
+    Creates the training and test datasets. Also creates the feature scalers and a numpy file containing the normalized x and y grid coordinates.
+    The samples are drawn equally from the 4 and 12 angle of attack datasets.
+    The processing is done in parallel to improve performance and array copying is avoided as much as possible.
+    Still a lot of memory is required to generate large datasets.
+    :param source_path: the directory containing the raw data
+    :param dest_path: the directory to save the generated files
+    :param sample_grid_size: the size of the sampling grid. The model accepts (128,128) grids
+    :param num_samples: the total number of samples of the generated data
+    :param train_size: the proportion of data to use for the training set in [0,1]
+    """
     train_path = os.path.join(dest_path, TRAIN_FILE)
     test_path = os.path.join(dest_path, TEST_FILE)
     if os.path.exists(train_path):
@@ -291,6 +390,13 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
 
 
 def sample_gridded_values(sample_grid: tuple, raw_values, raw_grid: tuple):
+    """
+    Creates an equally spaced grid from a raw grid. Sampling is done using the nearest point.
+    :param sample_grid: the x and y coordinates of the sampling grid
+    :param raw_values: the raw values of the feature to sample
+    :param raw_grid: the x and y coordinates of the raw grid
+    :return: a grid of sampled values
+    """
     raw_grid_x, raw_grid_y = raw_grid
     sample_grid_x, sample_grid_y = sample_grid
     sampled_values = griddata(np.vstack((raw_grid_x, raw_grid_y.T)).T,
