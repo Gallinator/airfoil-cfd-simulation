@@ -329,7 +329,7 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         rho = np.asarray(rho)
         energy = np.asarray(energy)
 
-        alphas = np.asarray([int(a) for _, a in enumerate(alphas)], copy=False)
+        alphas = np.asarray([int(a) for _, a in enumerate(alphas)])
         coefs_04 = extract_coefs(source['alpha+04'], indices_04)
         coefs_12 = extract_coefs(source['alpha+12'], indices_12)
         c_d, c_l, c_m = np.concatenate((coefs_04, coefs_12), 1)
