@@ -18,7 +18,7 @@ The ``` data ``` folder contains the following files:
 - ``` features_scaler.pkl ```: saved instance of ``` MinMaxScaler ``` used for velocity, density and energy normalization
 - ``` grid_scaler.pkl ``` : saved instance of ``` MinMaxScaler ``` used for grid normalization
 - ``` grid_coords.npy ```: arrays containing the normalized x and y points coordinates
-- ``` test_airfoils.h5 ```: normalized test/evaluation set
+- ``` eval_airfoils.h5 ```: normalized evaluation set
 - ``` train_sirfoils.h5 ```: normalized training set
 
 ## Inference example
