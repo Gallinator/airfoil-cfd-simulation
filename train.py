@@ -88,7 +88,7 @@ def train_model(save_path: str, data_path: str):
 
 
 def evaluate_model(model_path: str, data_path: str):
-    eval_data = AirfoilDataset(os.path.join(data_path, 'test_airfoils.h5'))
+    eval_data = AirfoilDataset(os.path.join(data_path, 'eval_airfoils.h5'))
     eval_loader = DataLoader(eval_data, batch_size=16, shuffle=True, num_workers=8)
 
     model = Model()
