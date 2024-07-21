@@ -19,7 +19,7 @@ from visualization import plot_raw_data, plot_airfoil
 
 DATA_URL = 'https://nrel-pds-windai.s3.amazonaws.com/aerodynamic_shapes/2D/9k_airfoils/v1.0.0/airfoil_9k_data.h5'
 TRAIN_FILE = 'train_airfoils.h5'
-TEST_FILE = 'test_airfoils.h5'
+EVAL_FILE = 'eval_airfoils.h5'
 AIRFOIL_MASK_VALUE = 0
 
 
@@ -282,7 +282,7 @@ def generate_indices(data_len, num_samples):
 
 def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, num_samples: int, train_size: float):
     """
-    Creates the training and test datasets. Also creates the feature scalers and a numpy file containing the normalized x and y grid coordinates.
+    Creates the training and evaluation datasets. Also creates the feature scalers and a numpy file containing the normalized x and y grid coordinates.
     The samples are drawn equally from the 4 and 12 angle of attack datasets.
     The processing is done in parallel to improve performance and array copying is avoided as much as possible.
     Still a lot of memory is required to generate large datasets.
@@ -293,11 +293,11 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
     :param train_size: the proportion of data to use for the training set in [0,1]
     """
     train_path = os.path.join(dest_path, TRAIN_FILE)
-    test_path = os.path.join(dest_path, TEST_FILE)
+    eval_path = os.path.join(dest_path, EVAL_FILE)
     if os.path.exists(train_path):
         os.remove(train_path)
-    if os.path.exists(test_path):
-        os.remove(test_path)
+    if os.path.exists(eval_path):
+        os.remove(eval_path)
 
     with h5pickle.File(source_path, 'r') as source:
         landmarks = source['shape']['landmarks'][()]
@@ -361,27 +361,27 @@ def create_sampled_datasets(source_path: str, dest_path: str, sample_grid_size, 
         dest['C_l'] = train_cl
         dest['C_m'] = train_cm
 
-    test_u, test_v, test_r, test_e, _ = normalize_features(
+    eval_u, eval_v, eval_r, eval_e, _ = normalize_features(
         u[train_end:],
         v[train_end:],
         rho[train_end:],
         energy[train_end:],
         scaler=feature_scaler)
-    test_cd, test_cl, test_cm, _ = normalize_coefficients(c_d[train_end:], c_l[train_end:], c_m[train_end:],
+    eval_cd, eval_cl, eval_cm, _ = normalize_coefficients(c_d[train_end:], c_l[train_end:], c_m[train_end:],
                                                           scaler=coefs_scaler)
 
-    with h5py.File(test_path, 'w') as dest:
+    with h5py.File(eval_path, 'w') as dest:
         dest['alpha'] = alphas[train_end:]
         dest['masks'] = masks[train_end:]
         dest['landmarks'] = norm_landmarks[train_end:]
         dest['grid'] = np.asarray([norm_grid_x, norm_grid_y])
-        dest['u'] = test_u
-        dest['v'] = test_v
-        dest['rho'] = test_r
-        dest['energy'] = test_e
-        dest['C_d'] = test_cd
-        dest['C_l'] = test_cl
-        dest['C_m'] = test_cm
+        dest['u'] = eval_u
+        dest['v'] = eval_v
+        dest['rho'] = eval_r
+        dest['energy'] = eval_e
+        dest['C_d'] = eval_cd
+        dest['C_l'] = eval_cl
+        dest['C_m'] = eval_cm
 
     save_scaler(grid_scaler, os.path.join(dest_path, 'grid_scaler.pkl'))
     save_scaler(feature_scaler, os.path.join(dest_path, 'features_scaler.pkl'))
@@ -470,4 +470,4 @@ if __name__ == '__main__':
                             128j,
                             args.num_samples,
                             args.train_size)
-    show_normalized_data_sample(os.path.join(data_dir, TEST_FILE))
+    show_normalized_data_sample(os.path.join(data_dir, EVAL_FILE))
